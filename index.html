@@ -6,8 +6,10 @@
     <title>Orsk Digger Project | Swag Team</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     
-    <!-- Основная библиотека для зума картинок -->
+    <!-- ПОДКЛЮЧЕНИЕ БИБЛИОТЕК (Версии для браузера) -->
     <link rel="stylesheet" href="https://unpkg.com" />
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
     <script src="https://unpkg.com"></script>
 
     <style>
@@ -21,10 +23,9 @@
         header { background: var(--y); color: var(--b); padding: 50px 0; text-align: center; border-bottom: 8px solid var(--accent); }
         .logo-img { width: 250px; height: 250px; border-radius: 50%; border: 8px solid var(--b); margin-bottom: 20px; object-fit: cover; box-shadow: 0 0 40px rgba(0,0,0,0.6); cursor: pointer; transition: transform 0.1s; }
         .logo-img:active { transform: scale(1.1); }
-        
         header h1 { margin: 0; font-size: 38px; letter-spacing: 5px; text-transform: uppercase; font-weight: 900; }
+        
         .team-desc { max-width: 750px; margin: 15px auto 0; font-size: 14px; line-height: 1.6; font-weight: bold; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 5px; }
-
         .lvl-box { margin-top: 25px; background: rgba(0,0,0,0.5); display: inline-block; padding: 15px 30px; border: 2px solid var(--b); }
         .xp-bar { width: 250px; height: 12px; background: #333; display: inline-block; border: 1px solid var(--b); position: relative; }
         #xp-fill { height: 100%; background: var(--b); width: 0%; transition: 1s ease-in-out; }
@@ -33,31 +34,25 @@
         nav button, nav select { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 12px 18px; cursor: pointer; font-weight: bold; font-family: inherit; }
         nav button.active { background: var(--y); color: var(--b); }
 
-        /* КАРТА */
-        #map-container { height: 600px; width: 100%; border: 4px solid var(--y); background: #000; position: relative; overflow: hidden; }
-        #map { height: 100%; width: 100%; cursor: crosshair; }
-        
-        .sub-nav { display: flex; gap: 10px; margin-bottom: 15px; }
-        .sub-nav button { flex: 1; padding: 15px; background: var(--g); color: var(--y); border: 2px solid var(--y); font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        .sub-nav button.active { background: var(--y); color: var(--b); }
+        .sub-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .sub-nav button { flex: 1; padding: 15px; background: var(--g); color: var(--y); border: 3px solid var(--y); box-shadow: 4px 4px 0px var(--y); font-weight: bold; cursor: pointer; }
+        .sub-nav button.active { background: var(--y); color: var(--b); transform: translate(2px, 2px); box-shadow: 0px 0px 0px var(--y); }
 
         .page { display: none; min-height: 600px; }
         .page.active { display: block; }
+        #map { height: 600px; width: 100%; border: 4px solid var(--y); background: #000; cursor: crosshair; }
         
         .form-section { background: var(--g); padding: 25px; border: 2px solid var(--y); margin-bottom: 30px; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; background: var(--b); border: 1px solid var(--y); color: var(--text); box-sizing: border-box; font-family: inherit; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; background: var(--b); border: 1px solid var(--y); color: var(--text); font-family: inherit; box-sizing: border-box; }
         .btn-send { background: var(--y); color: var(--b); border: none; padding: 18px; width: 100%; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         
         .post-card { background: var(--g); padding: 25px; margin-bottom: 20px; border-left: 10px solid var(--y); position: relative; }
         .post-meta { color: var(--y); font-size: 12px; margin-bottom: 10px; font-weight: bold; }
+        .post-card img { max-width: 100%; margin-top: 15px; border: 2px solid var(--y); }
         .btn-delete { position: absolute; top: 10px; right: 10px; background: #c00; color: #fff; border: none; padding: 5px; cursor: pointer; font-size: 10px; }
         
         footer { background: var(--b); color: var(--y); text-align: center; padding: 30px; border-top: 4px solid var(--y); margin-top: 50px; font-weight: 900; text-transform: uppercase; }
-        
-        /* Попап */
-        .leaflet-popup-content-wrapper { background: var(--g); color: var(--y); border: 1px solid var(--y); border-radius: 0; }
-        .leaflet-popup-tip { background: var(--y); }
-        .pop-btn { background: var(--y); border: none; padding: 5px; margin-top: 5px; width: 100%; cursor: pointer; font-weight: bold; font-family: inherit; }
+        .leaflet-popup-content button { background: var(--y); color: #000; border: none; padding: 5px; margin-top: 5px; width: 100%; cursor: pointer; font-family: inherit; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -66,10 +61,10 @@
     <img src="assets/logo.png" id="main-logo" class="logo-img" onclick="playMeow()" onerror="this.src='https://placeholder.com'">
     <h1>ORSK DIGGER PROJECT</h1>
     <div class="team-desc">
-        Форум диггеров из команды Swag Team. Исследуем забытые тоннели Орска. Настоящий диггер не оставляет следов, а секреты подземелий не терпят суеты.
+        Форум диггеров из команды Swag Team. Исследуем забытые тоннели Орска. И помни: настоящий диггер не оставляет следов, а секреты подземелий не терпят суеты.
     </div>
     <div class="lvl-box">
-        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Статус: Загрузка...</span>
+        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Статус: Школьник</span>
         <div style="margin-top: 8px;">
             <div class="xp-bar"><div id="xp-fill"></div></div>
             <div id="xp-text" style="font-size: 13px; font-weight: bold;">0 XP</div>
@@ -84,53 +79,54 @@
         <button onclick="switchTab('forum-page')" id="nav-forum-page">ФОРУМ</button>
         <button onclick="switchTab('wiki-page')" id="nav-wiki-page">ВИКИ</button>
         <select id="theme-select" onchange="changeTheme(this.value)">
-            <option value="default">☢ СТАНДАРТ</option>
-            <option value="bw">⬚ ЧБ</option>
-            <option value="boykisser">✿ BOYKISSER :3</option>
+            <option value="default">☢ ТЕМА: СТАНДАРТ</option>
+            <option value="bw">⬚ ТЕМА: ЧБ</option>
+            <option value="boykisser">✿ ТЕМА: BOYKISSER :3</option>
         </select>
-        <button onclick="changeNick()">[ <span id="current-nick">...</span> ]</button>
+        <button onclick="changeNick()">[ <span id="current-nick">Ник...</span> ]</button>
     </nav>
 
+    <!-- КАРТА -->
     <div id="map-page" class="page active">
         <div class="sub-nav">
-            <button onclick="setMapImg('MapOsn.JPG')" id="m-btn-osn">ОСНОВНАЯ</button>
-            <button onclick="setMapImg('MapLenkom.PNG')" id="m-btn-lenkom">ЛЕНКОМ</button>
+            <button onclick="setMapFile('MapOsn.JPG')" id="m-btn-osn" class="active">ОСНОВНАЯ КАРТА</button>
+            <button onclick="setMapFile('MapLenkom.PNG')" id="m-btn-lenkom">ЛЕНКОМ</button>
         </div>
-        <div id="map-container">
-            <div id="map"></div>
-        </div>
-        <p style="color:var(--y); text-align:center; font-size: 11px; margin-top: 10px;">[ ЗУМ КОЛЕСИКОМ. КЛИК ПО КАРТЕ — СОЗДАТЬ ЗАМЕТКУ ]</p>
+        <div id="map"></div>
+        <p style="color:var(--y); text-align:center; font-size: 11px; margin-top: 10px;">[ ЗУМ КОЛЕСИКОМ. КЛИК — СОЗДАТЬ ЗАМЕТКУ ]</p>
     </div>
 
-    <!-- Другие страницы (Архив, Форум, Вики) -->
+    <!-- АРХИВ -->
     <div id="blog-page" class="page">
         <div class="form-section">
             <input type="text" id="t-title" placeholder="ОБЪЕКТ">
-            <textarea id="t-body" rows="3" placeholder="ОТЧЕТ..."></textarea>
-            <input type="text" id="t-img" placeholder="URL ФОТО">
-            <button class="btn-send" onclick="sendPost()">ВНЕСТИ В АРХИВ (+10 XP)</button>
+            <textarea id="t-body" rows="3" placeholder="ТВОЙ ОТЧЕТ..."></textarea>
+            <input type="text" id="t-img" placeholder="ССЫЛКА НА ФОТО">
+            <button class="btn-send" onclick="sendPost()">ОПУБЛИКОВАТЬ (+10 XP)</button>
         </div>
         <div id="feed"></div>
     </div>
 
+    <!-- ФОРУМ -->
     <div id="forum-page" class="page">
         <div class="sub-nav">
             <button onclick="setForumCat('flud')" id="f-btn-flud" class="active">ФЛУДИЛКА</button>
             <button onclick="setForumCat('zalaz')" id="f-btn-zalaz">ОБСУЖДЕНИЕ</button>
         </div>
         <div class="form-section">
-            <textarea id="f-msg" rows="2" placeholder="НАПИСАТЬ СООБЩЕНИЕ..."></textarea>
+            <textarea id="f-msg" rows="2" placeholder="СООБЩЕНИЕ..."></textarea>
             <button class="btn-send" onclick="sendForum()">ОТПРАВИТЬ (+5 XP)</button>
         </div>
         <div id="forum-feed"></div>
     </div>
 
+    <!-- ВИКИ -->
     <div id="wiki-page" class="page">
         <div class="form-section">
-            <input type="text" id="w-obj" placeholder="ИМЯ ОБЪЕКТА">
+            <input type="text" id="w-obj" placeholder="ИМЯ ОБЪЕКТА ДЛЯ ПОИСКА С КАРТЫ">
             <textarea id="w-desc" rows="4" placeholder="ОПИСАНИЕ..."></textarea>
-            <input type="text" id="w-img" placeholder="URL ФОТО">
-            <button class="btn-send" onclick="saveWiki()">СОХРАНИТЬ (+15 XP)</button>
+            <input type="text" id="w-img" placeholder="ССЫЛКА НА ФОТО">
+            <button class="btn-send" onclick="saveWiki()">ОБНОВИТЬ ВИКИ (+15 XP)</button>
         </div>
         <div id="wiki-feed"></div>
     </div>
@@ -138,21 +134,28 @@
 
 <footer>КТО ЗАДУДОСИТ ЭТОТ САЙТ ТОТ ПИДОРАС</footer>
 
-<!-- Firebase скрипты -->
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
-
 <script>
-    let db, map, imgLayer;
+    // --- ИНТЕГРАЦИЯ FIREBASE CONFIG ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBHxialxBDWHfz4mEdg_2eOoIxomnu_hQU",
+        authDomain: "://firebaseapp.com",
+        databaseURL: "https://firebasedatabase.app",
+        projectId: "orskdigg",
+        storageBucket: "orskdigg.firebasestorage.app",
+        messagingSenderId: "223291146501",
+        appId: "1:223291146501:web:a6b90320c21ff163b7376c"
+    };
+
+    let db, map, imgOverlay;
     let userNick = localStorage.getItem('digger_nick');
     let userXP = 0;
-    let currentMap = 'MapOsn.JPG';
+    let currentMapFile = 'MapOsn.JPG';
     let markersList = {};
 
     window.onload = function() {
         if (!userNick) {
-            let n = prompt("ВВЕДИ СВОЙ ПОЗЫВНОЙ:");
-            if (n) { localStorage.setItem('digger_nick', n); location.reload(); }
+            let n = prompt("КТО ТЫ, ВОИН? Введи свой позывной:");
+            if(n) { localStorage.setItem('digger_nick', n); location.reload(); }
         } else {
             initApp();
         }
@@ -162,96 +165,80 @@
         document.getElementById('current-nick').innerText = userNick;
         changeTheme(localStorage.getItem('site_theme') || 'default');
         
-        firebase.initializeApp({ databaseURL: "https://firebasedatabase.app" });
+        // Инициализация Firebase (v8 синтаксис)
+        firebase.initializeApp(firebaseConfig);
         db = firebase.database();
 
-        initMap();
-        loadBlog(); loadForum('flud'); loadWiki(); syncXP();
+        initMapEngine(); loadBlog(); loadForum('flud'); loadWiki(); syncXP();
     }
 
     function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
 
-    // --- ЛОГИКА КАРТЫ-КАРТИНКИ ---
-    function initMap() {
-        // CRS.Simple отключает географию, карта работает на пикселях
-        map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -3,
-            maxZoom: 2,
-            attributionControl: false
-        });
-
-        setMapImg(currentMap);
+    // --- ДВИЖОК КАРТЫ ---
+    function initMapEngine() {
+        map = L.map('map', { crs: L.CRS.Simple, minZoom: -3, maxZoom: 3, attributionControl: false });
+        setMapFile(currentMapFile);
 
         map.on('click', (e) => {
-            let note = prompt("Название объекта:");
+            const note = prompt("Название объекта:");
             if(!note) return;
-            let wiki = prompt("Связать со статьей Вики (имя):", "");
-            
-            let path = currentMap.replace('.', '_');
-            db.ref('markers/' + path).push({
-                y: e.latlng.lat, 
-                x: e.latlng.lng, 
-                note: note, 
-                wiki: wiki,
-                author: userNick
-            });
+            const wiki = prompt("Название статьи в Вики (если есть):", "");
+            const path = currentMapFile.replace('.', '_');
+            db.ref('markers/' + path).push({ lat: e.latlng.lat, lng: e.latlng.lng, note, wiki, author: userNick });
             addXP(5);
         });
     }
 
-    function setMapImg(file) {
-        currentMap = file;
+    function setMapFile(file) {
+        currentMapFile = file;
         document.getElementById('m-btn-osn').className = (file === 'MapOsn.JPG' ? 'active' : '');
         document.getElementById('m-btn-lenkom').className = (file === 'MapLenkom.PNG' ? 'active' : '');
-
-        if (imgLayer) map.removeLayer(imgLayer);
+        
+        if (imgOverlay) map.removeLayer(imgOverlay);
         Object.values(markersList).forEach(m => map.removeLayer(m));
         markersList = {};
 
-        let img = new Image();
+        const img = new Image();
         img.src = 'assets/' + file;
         img.onload = function() {
-            let w = this.width, h = this.height;
-            let bounds = [, [h, w]];
-            imgLayer = L.imageOverlay(img.src, bounds).addTo(map);
+            const w = this.width, h = this.height;
+            const bounds = [, [h, w]];
+            imgOverlay = L.imageOverlay(img.src, bounds).addTo(map);
             map.fitBounds(bounds);
             loadMarkers(file);
         };
-        img.onerror = () => { console.error("Файл не найден: assets/" + file); };
     }
 
     function loadMarkers(file) {
-        let path = file.replace('.', '_');
+        const path = file.replace('.', '_');
         db.ref('markers/' + path).off();
         db.ref('markers/' + path).on('value', (snap) => {
             Object.values(markersList).forEach(m => map.removeLayer(m));
             markersList = {};
-            let data = snap.val();
+            const data = snap.val();
             if(!data) return;
-
             Object.keys(data).forEach(id => {
-                let d = data[id];
-                let m = L.marker([d.y, d.x]).addTo(map);
-                let html = `<b>${d.note}</b><br><small>Диггер: ${d.author}</small>`;
-                if(d.wiki) html += `<br><button class="pop-btn" onclick="switchTab('wiki-page')">СТАТЬЯ ВИКИ</button>`;
+                const d = data[id];
+                const marker = L.marker([d.lat, d.lng]).addTo(map);
+                let html = `<b>${d.note}</b><br><small>Автор: ${d.author}</small>`;
+                if(d.wiki) html += `<br><button onclick="switchTab('wiki-page')">📖 В ВИКИ</button>`;
                 if(d.author === userNick) {
-                    html += `<br><button class="pop-btn" onclick="editM('${id}','${d.note}')">ИЗМЕНИТЬ</button>`;
-                    html += `<button class="pop-btn" style="background:#500;color:#fff" onclick="delM('${id}')">УДАЛИТЬ</button>`;
+                    html += `<br><button onclick="editM('${id}','${d.note}')">✏️ ПРАВИТЬ</button>`;
+                    html += `<button style="background:#500;color:#fff" onclick="delM('${id}')">🗑 УДАЛИТЬ</button>`;
                 }
-                m.bindPopup(html);
-                markersList[id] = m;
+                marker.bindPopup(html);
+                markersList[id] = marker;
             });
         });
     }
 
-    function delM(id) { if(confirm("Удалить?")) db.ref('markers/'+currentMap.replace('.','_')+'/'+id).remove(); }
+    function delM(id) { if(confirm("Удалить?")) db.ref('markers/'+currentMapFile.replace('.','_')+'/'+id).remove(); }
     function editM(id, old) { 
         let n = prompt("Новое имя:", old); 
-        if(n) db.ref('markers/'+currentMap.replace('.','_')+'/'+id).update({note: n}); 
+        if(n) db.ref('markers/'+currentMapFile.replace('.','_')+'/'+id).update({note: n}); 
     }
 
-    // --- ОСТАЛЬНОЙ ФУНКЦИОНАЛ ---
+    // --- ФУНКЦИИ XP ---
     function syncXP() { db.ref('users/' + userNick).on('value', s => { userXP = s.val() || 0; updateLVL(); }); }
     function addXP(v) { db.ref('users/' + userNick).set(userXP + v); }
     function updateLVL() {
@@ -263,8 +250,10 @@
         document.getElementById('lvl-text').innerText = "Статус: " + lvl;
         document.getElementById('xp-text').innerText = `${userXP}/${next} XP`;
         document.getElementById('xp-fill').style.width = (userXP >= 1000 ? 100 : (userXP/next*100)) + "%";
+        if(lvl === "Крутэлык") document.getElementById('lvl-text').style.color = "red";
     }
 
+    // --- ОБЩАЯ ЛОГИКА ---
     function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -279,50 +268,51 @@
     }
 
     function sendPost() {
-        let t = document.getElementById('t-title').value, b = document.getElementById('t-body').value;
+        const t = document.getElementById('t-title').value, b = document.getElementById('t-body').value;
         if(t && b) { db.ref('posts').push({ title: t, body: b, img: document.getElementById('t-img').value, author: userNick, date: new Date().toLocaleString() }); addXP(10); }
     }
 
     function loadBlog() {
         db.ref('posts').on('value', s => {
-            let feed = document.getElementById('feed'); feed.innerHTML = '';
-            let d = s.val();
-            if(d) Object.keys(d).reverse().forEach(k => {
-                let p = d[k]; feed.innerHTML += `<div class="post-card"><button class="btn-delete" onclick="db.ref('posts/${k}').remove()">X</button><div class="post-meta">${p.date} | ${p.author}</div><h2>${p.title}</h2><p>${p.body}</p>${p.img ? `<img src="${p.img}" style="max-width:100%">`:''}</div>`;
+            const feed = document.getElementById('feed'); feed.innerHTML = '';
+            const data = s.val();
+            if(data) Object.keys(data).reverse().forEach(k => {
+                const p = data[k];
+                feed.innerHTML += `<div class="post-card"><button class="btn-delete" onclick="db.ref('posts/${k}').remove()">X</button><div class="post-meta">${p.date} | ${p.author}</div><h2>${p.title}</h2><p>${p.body}</p>${p.img ? `<img src="${p.img}">` : ''}</div>`;
             });
         });
     }
 
     function setForumCat(c) { loadForum(c); }
-    function sendForum() {
-        let m = document.getElementById('f-msg').value;
-        let cat = document.getElementById('f-btn-flud').classList.contains('active') ? 'flud' : 'zalaz';
-        if(m) { db.ref('forum/' + cat).push({ msg: m, author: userNick, date: new Date().toLocaleString() }); addXP(5); document.getElementById('f-msg').value = ''; }
-    }
-
     function loadForum(cat) {
         document.getElementById('f-btn-flud').className = (cat==='flud'?'active':'');
         document.getElementById('f-btn-zalaz').className = (cat==='zalaz'?'active':'');
         db.ref('forum/' + cat).on('value', s => {
-            let f = document.getElementById('forum-feed'); f.innerHTML = '';
-            let d = s.val();
-            if(d) Object.keys(d).reverse().forEach(k => {
-                let m = d[k]; f.innerHTML += `<div class="forum-msg"><div class="post-meta">${m.date} | ${m.author}</div><div>${m.msg}</div></div>`;
+            const f = document.getElementById('forum-feed'); f.innerHTML = '';
+            const data = s.val();
+            if(data) Object.keys(data).reverse().forEach(k => {
+                const m = data[k]; f.innerHTML += `<div class="forum-msg"><div class="post-meta">${m.date} | ${m.author}</div><div>${m.msg}</div></div>`;
             });
         });
     }
 
+    function sendForum() {
+        const m = document.getElementById('f-msg').value;
+        const cat = document.getElementById('f-btn-flud').classList.contains('active') ? 'flud' : 'zalaz';
+        if(m) { db.ref('forum/' + cat).push({ msg: m, author: userNick, date: new Date().toLocaleString() }); addXP(5); document.getElementById('f-msg').value = ''; }
+    }
+
     function saveWiki() {
-        let o = document.getElementById('w-obj').value, d = document.getElementById('w-desc').value;
+        const o = document.getElementById('w-obj').value, d = document.getElementById('w-desc').value;
         if(o && d) { db.ref('wiki/' + o).set({ desc: d, img: document.getElementById('w-img').value, author: userNick, date: new Date().toLocaleString() }); addXP(15); }
     }
 
     function loadWiki() {
         db.ref('wiki').on('value', s => {
-            let f = document.getElementById('wiki-feed'); f.innerHTML = '<h2>АРХИВ ОБЪЕКТОВ</h2>';
-            let d = s.val();
-            if(d) Object.keys(d).forEach(k => {
-                let w = d[k]; f.innerHTML += `<div class="post-card"><h2>${k}</h2><p>${w.desc}</p>${w.img ? `<img src="${w.img}" style="max-width:100%">`:''}</div>`;
+            const f = document.getElementById('wiki-feed'); f.innerHTML = '<h2>АРХИВ ОБЪЕКТОВ</h2>';
+            const data = s.val();
+            if(data) Object.keys(data).forEach(k => {
+                const w = data[k]; f.innerHTML += `<div class="post-card"><h2>${k}</h2><p>${w.desc}</p>${w.img ? `<img src="${w.img}">` : ''}</div>`;
             });
         });
     }
