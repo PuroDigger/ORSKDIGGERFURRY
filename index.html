@@ -6,8 +6,8 @@
     <title>Orsk Digger Project | Online</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     
-    <!-- Подключение библиотеки напрямую из сети -->
-    <script src="https://jsdelivr.net"></script>
+    <!-- Подключаем библиотеку напрямую из глобальной сети (CDN) -->
+    <script src="https://unpkg.com"></script>
     
     <style>
         :root { --y: #ffcc00; --b: #0a0a0a; --g: #1a1a1a; --text: #e0e0e0; --accent: #ffcc00; }
@@ -145,15 +145,16 @@
     let userNick, userXP = 0, currentMapFile = 'maposn.jpg', currentForumCat = 'flud', lastAction = 0;
     let tempCoord = null;
 
-    // --- ПОДКЛЮЧЕНИЕ К SUPABASE ---
+    // --- ПОДКЛЮЧЕНИЕ ---
     function initSupabase() {
         try {
-            // Используем библиотеку, загруженную из интернета
-            db = window.supabase.createClient(SUB_URL, SUB_KEY);
-            console.log("База данных подключена онлайн!");
+            // Берем клиент напрямую из библиотеки, загруженной извне
+            const { createClient } = window.supabase;
+            db = createClient(SUB_URL, SUB_KEY);
+            console.log("Supabase подключен!");
         } catch (e) {
-            console.error("Ошибка загрузки библиотеки Supabase!", e);
-            alert("Не удалось загрузить библиотеку базы данных из интернета.");
+            console.error("Ошибка библиотеки!", e);
+            alert("Ошибка! Проверь интернет или включи VPN.");
         }
     }
 
@@ -180,18 +181,7 @@
         changeTheme(localStorage.getItem('site_theme') || 'default');
     }
 
-    function checkCD() {
-        const now = Date.now();
-        if (now - lastAction < 5000) { alert(`☢ ПАУЗА ${Math.ceil((5000-(now-lastAction))/1000)} сек!`); return false; }
-        lastAction = now; return true;
-    }
-
-    function addXP(v) { 
-        userXP = parseInt(localStorage.getItem('digger_xp') || "0") + v;
-        localStorage.setItem('digger_xp', userXP);
-        updateLVLUI();
-    }
-
+    // --- XP И РАНГИ ---
     function updateLVLUI() {
         userXP = parseInt(localStorage.getItem('digger_xp') || "0");
         const ranks = [
@@ -208,11 +198,22 @@
         document.getElementById('xp-text').innerText = `${userXP} XP`;
     }
 
+    function addXP(v) { 
+        userXP = parseInt(localStorage.getItem('digger_xp') || "0") + v;
+        localStorage.setItem('digger_xp', userXP);
+        updateLVLUI();
+    }
+
+    function checkCD() {
+        const now = Date.now();
+        if (now - lastAction < 5000) { alert(`☢ ПАУЗА ${Math.ceil((5000-(now-lastAction))/1000)} сек!`); return false; }
+        lastAction = now; return true;
+    }
+
+    // --- КАРТА ---
     function setMap(f) {
         currentMapFile = f;
         document.getElementById('map-img').src = 'assets/' + f;
-        document.getElementById('m-btn-osn').className = f.includes('osn') ? 'active' : '';
-        document.getElementById('m-btn-lenkom').className = f.includes('lenkom') ? 'active' : '';
         renderMarkers();
     }
 
@@ -224,11 +225,6 @@
         if(note) {
             await db.from('markers').insert([{ note, x, y, map_file: currentMapFile }]);
             addXP(5); renderMarkers();
-            if(confirm("Создать статью в Вики для этого объекта?")) {
-                tempCoord = { x, y, f: currentMapFile };
-                document.getElementById('w-obj').value = note;
-                switchTab('wiki-page');
-            }
         }
     }
 
@@ -243,6 +239,7 @@
         });
     }
 
+    // --- КОНТЕНТ ---
     async function sendPost() {
         const t = document.getElementById('t-title').value, b = document.getElementById('t-body').value;
         if(t && b && checkCD()) {
@@ -271,8 +268,6 @@
 
     async function loadForum(c) {
         currentForumCat = c;
-        document.getElementById('f-btn-flud').className = c==='flud'?'active':'';
-        document.getElementById('f-btn-zalaz').className = c==='zalaz'?'active':'';
         const { data } = await db.from('forum').select('*').eq('category', c).order('id', { ascending: false });
         const f = document.getElementById('forum-feed'); f.innerHTML = '';
         if(data) data.forEach(m => {
@@ -283,11 +278,9 @@
     async function saveWiki() {
         const o = document.getElementById('w-obj').value, d = document.getElementById('w-desc').value;
         if(o && d && checkCD()) {
-            const payload = { o, d };
-            if(tempCoord) { payload.mX = tempCoord.x; payload.mY = tempCoord.y; payload.mF = tempCoord.f; }
-            await db.from('wiki').insert([payload]);
-            tempCoord = null; document.getElementById('w-obj').value = ''; document.getElementById('w-desc').value = '';
+            await db.from('wiki').insert([{ o, d }]);
             addXP(15); loadWiki();
+            document.getElementById('w-obj').value = ''; document.getElementById('w-desc').value = '';
         }
     }
 
@@ -295,41 +288,26 @@
         const { data } = await db.from('wiki').select('*').order('id', { ascending: false });
         const f = document.getElementById('wiki-feed'); f.innerHTML = '';
         if(data) data.forEach(w => {
-            let btn = w.mF ? `<button class="btn-jump" onclick="jumpToMap('${w.mF}', ${w.mX}, ${w.mY})">📍 НА КАРТУ</button>` : '';
-            f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p>${btn}</div>`;
+            f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p></div>`;
         });
     }
 
+    // --- СЕРВИСНЫЕ ---
     function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(document.getElementById('nav-'+id)) document.getElementById('nav-'+id).classList.add('active');
         if(id === 'profile-page') renderProfile();
     }
 
     function renderProfile() {
-        document.getElementById('profile-stats').innerHTML = `
-            <strong>НИК:</strong> ${userNick}<br>
-            <strong>ОПЫТ:</strong> ${userXP} XP<br>
-            <strong>В КОМАНДЕ С:</strong> ${localStorage.getItem('reg_date') || "Давно"}<br>
-            <strong>СТАТУС:</strong> <span style="color:#0f0">В СЕТИ (ОНЛАЙН)</span>
-        `;
+        document.getElementById('profile-stats').innerHTML = `<strong>НИК:</strong> ${userNick}<br><strong>ОПЫТ:</strong> ${userXP} XP`;
     }
 
-    function jumpToMap(f, x, y) {
-        setMap(f); switchTab('map-page');
-        setTimeout(() => {
-            const win = document.getElementById('map-window'); const img = document.getElementById('map-img');
-            win.scrollLeft = (img.clientWidth * (x/100)) - (win.clientWidth/2);
-            win.scrollTop = (img.clientHeight * (y/100)) - (win.clientHeight/2);
-        }, 500);
-    }
-
-    function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
-    function changeTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
     function zoomMap(v) { document.getElementById('map-area').style.width = v + "%"; }
-    function resetData() { if(confirm("УДАЛИТЬ ПРОГРЕСС XP?")) { localStorage.setItem('digger_xp', '0'); location.reload(); } }
+    function changeTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
+    function resetData() { localStorage.setItem('digger_xp', '0'); location.reload(); }
+    function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
 </script>
 </body>
 </html>
