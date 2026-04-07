@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orsk Digger Project | Swag Team (Standalone)</title>
+    <title>Orsk Digger Project | Swag team</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
+    <!-- Подключаем библиотеку Supabase -->
+    <script src="https://jsdelivr.net"></script>
     
     <style>
         :root { --y: #ffcc00; --b: #0a0a0a; --g: #1a1a1a; --text: #e0e0e0; --accent: #ffcc00; }
@@ -35,7 +37,6 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* КАРТА */
         #map-window { width: 100%; height: 600px; border: 4px solid var(--y); background: #000; overflow: auto; position: relative; }
         #map-area { position: relative; display: inline-block; min-width: 100%; transition: width 0.2s; }
         #map-img { display: block; width: 100%; cursor: crosshair; }
@@ -57,9 +58,9 @@
     <img src="assets/logo.png" id="main-logo" class="logo-img" onclick="playMeow()">
     <h1>ORSK DIGGER PROJECT</h1>
     <div class="lvl-box">
-        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Статус: Школьник</span>
+        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Загрузка...</span>
         <div class="xp-bar"><div id="xp-fill"></div></div>
-        <div id="xp-text" style="font-size: 13px; font-weight: bold; margin-top: 5px;">0 / 50 XP</div>
+        <div id="xp-text" style="font-size: 13px; font-weight: bold; margin-top: 5px;">0 XP</div>
     </div>
 </header>
 
@@ -69,7 +70,7 @@
         <button onclick="switchTab('blog-page')" id="nav-blog-page">АРХИВ</button>
         <button onclick="switchTab('forum-page')" id="nav-forum-page">ФОРУМ</button>
         <button onclick="switchTab('wiki-page')" id="nav-wiki-page">ВИКИ</button>
-        <button onclick="renderProfile(); switchTab('profile-page')" id="nav-profile-page">ПРОФИЛЬ</button>
+        <button onclick="switchTab('profile-page')" id="nav-profile-page">ПРОФИЛЬ</button>
         <select onchange="changeTheme(this.value)">
             <option value="default">🌐 СТАНДАРТ</option>
             <option value="bw">☢ МОНОХРОМ</option>
@@ -89,19 +90,9 @@
         </div>
         <div id="map-window">
             <div id="map-area">
-                <img src="maposn.jpg" id="map-img" onclick="addMarker(event)">
+                <img src="assets/maposn.jpg" id="map-img" onclick="addMarker(event)">
                 <div id="markers-layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none;"></div>
             </div>
-        </div>
-    </div>
-
-    <!-- ПРОФИЛЬ -->
-    <div id="profile-page" class="page">
-        <div class="form-section">
-            <h2 style="color: var(--y); border-bottom: 2px solid var(--y); margin-top:0;">ЛИЧНОЕ ДЕЛО ДИГГЕРА</h2>
-            <div id="profile-stats" style="font-size: 18px; line-height: 2;"></div>
-            <button class="btn-send" style="margin-top: 20px; width: auto; padding: 10px 25px;" onclick="switchTab('map-page')">НАЗАД</button>
-            <button class="btn-send" style="margin-top: 20px; width: auto; background: #500; color: #fff;" onclick="resetData()">СБРОСИТЬ ВСЁ</button>
         </div>
     </div>
 
@@ -118,8 +109,8 @@
     <!-- ФОРУМ -->
     <div id="forum-page" class="page">
         <div class="sub-nav">
-            <button onclick="setForum('flud')" id="f-btn-flud" class="active">ФЛУДИЛКА</button>
-            <button onclick="setForum('zalaz')" id="f-btn-zalaz">ОБСУЖДЕНИЕ</button>
+            <button onclick="loadForum('flud')" id="f-btn-flud" class="active">ФЛУДИЛКА</button>
+            <button onclick="loadForum('zalaz')" id="f-btn-zalaz">ОБСУЖДЕНИЕ</button>
         </div>
         <div class="form-section">
             <textarea id="f-msg" rows="2" placeholder="СООБЩЕНИЕ..."></textarea>
@@ -137,11 +128,25 @@
         </div>
         <div id="wiki-feed"></div>
     </div>
+
+    <!-- ПРОФИЛЬ -->
+    <div id="profile-page" class="page">
+        <div class="form-section">
+            <h2 style="color: var(--y); border-bottom: 2px solid var(--y); margin-top:0;">ЛИЧНОЕ ДЕЛО ДИГГЕРА</h2>
+            <div id="profile-stats" style="font-size: 18px; line-height: 2;"></div>
+            <button class="btn-send" style="margin-top: 20px; width: auto; background: #500; color: #fff;" onclick="resetData()">СБРОСИТЬ ПРОГРЕСС XP</button>
+        </div>
+    </div>
 </div>
 
 <footer>КТО ЗАДУДОСИТ ЭТОТ САЙТ ТОТ ПИДОРАС</footer>
 
 <script>
+    // --- КОНФИГУРАЦИЯ SUPABASE ---
+    const SUB_URL = 'https://supabase.co';
+    const SUB_KEY = 'sb_publishable_TMgSn4UaJ1bovISkRi5ifA_8BrIdZCA';
+    const supabase = document.supabase ? document.supabase : window.supabase.createClient(SUB_URL, SUB_KEY);
+
     let userNick, userXP = 0, currentMapFile = 'maposn.jpg', currentForumCat = 'flud', lastAction = 0;
     let tempCoord = null;
 
@@ -158,10 +163,12 @@
         } else { initApp(); }
     };
 
-    function initApp() {
-        setMap(currentMapFile);
-        loadBlog(); loadForum('flud'); loadWiki();
+    async function initApp() {
         updateLVLUI();
+        loadBlog();
+        loadForum('flud');
+        loadWiki();
+        renderMarkers();
         changeTheme(localStorage.getItem('site_theme') || 'default');
     }
 
@@ -171,9 +178,6 @@
         lastAction = now; return true;
     }
 
-    // --- ВСПОМОГАТЕЛЬНЫЕ ---
-    function getStore(k) { return JSON.parse(localStorage.getItem(k) || "[]"); }
-    function setStore(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
     function addXP(v) { 
         userXP = parseInt(localStorage.getItem('digger_xp') || "0") + v;
         localStorage.setItem('digger_xp', userXP);
@@ -187,20 +191,13 @@
             {name: "Дренажная Крыса", min: 50, max: 150},
             {name: "Лазальщик", min: 150, max: 400},
             {name: "Диггер", min: 400, max: 1000},
-            {name: "Крутэлык", min: 1000, max: 1000}
+            {name: "Крутэлык", min: 1000, max: 99999}
         ];
-        let r = ranks[0];
-        for(let i=ranks.length-1; i>=0; i--) { if(userXP >= ranks[i].min) { r = ranks[i]; break; } }
-
+        let r = ranks.find((rank, i) => userXP >= rank.min && (ranks[i+1] ? userXP < ranks[i+1].min : true)) || ranks[0];
         document.getElementById('lvl-text').innerText = "Статус: " + r.name;
-        if(r.name === "Крутэлык") {
-            document.getElementById('xp-text').innerText = "МАКСИМУМ ДОСТИГНУТ";
-            document.getElementById('xp-fill').style.width = "100%";
-        } else {
-            let progress = ((userXP - r.min) / (r.max - r.min)) * 100;
-            document.getElementById('xp-text').innerText = `${userXP - r.min} / ${r.max - r.min} XP`;
-            document.getElementById('xp-fill').style.width = progress + "%";
-        }
+        let progress = r.name === "Крутэлык" ? 100 : ((userXP - r.min) / (r.max - r.min)) * 100;
+        document.getElementById('xp-fill').style.width = progress + "%";
+        document.getElementById('xp-text').innerText = `${userXP} XP`;
     }
 
     // --- КАРТА ---
@@ -212,17 +209,13 @@
         renderMarkers();
     }
 
-    function zoomMap(v) { document.getElementById('map-area').style.width = v + "%"; }
-
-    function addMarker(e) {
+    async function addMarker(e) {
         if(!checkCD()) return;
         const rect = e.target.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
         const note = prompt("Название объекта:");
         if(note) {
-            let m = getStore('markers_' + currentMapFile);
-            m.push({ x, y, note, id: Date.now() });
-            setStore('markers_' + currentMapFile, m);
+            await supabase.from('markers').insert([{ note, x, y, map_file: currentMapFile }]);
             addXP(5); renderMarkers();
             if(confirm("Создать статью в Вики для этого объекта?")) {
                 tempCoord = { x, y, f: currentMapFile };
@@ -232,90 +225,73 @@
         }
     }
 
-    function renderMarkers() {
+    async function renderMarkers() {
+        const { data: markers } = await supabase.from('markers').select('*').eq('map_file', currentMapFile);
         const layer = document.getElementById('markers-layer'); layer.innerHTML = '';
-        getStore('markers_' + currentMapFile).forEach(m => {
-            const el = document.createElement('div'); el.className = 'marker'; el.style.left = m.x + "%"; el.style.top = m.y + "%";
-            el.onclick = (e) => { e.stopPropagation(); if(confirm("Удалить метку " + m.note + "?")) {
-                setStore('markers_'+currentMapFile, getStore('markers_'+currentMapFile).filter(i => i.id !== m.id)); renderMarkers();
-            }};
+        if(markers) markers.forEach(m => {
+            const el = document.createElement('div'); el.className = 'marker'; 
+            el.style.left = m.x + "%"; el.style.top = m.y + "%";
+            el.title = m.note;
             layer.appendChild(el);
         });
     }
 
-    // --- ПРОФИЛЬ ---
-    function renderProfile() {
-        const stats = {
-            posts: getStore('posts').length,
-            forum: getStore('forum_flud').length + getStore('forum_zalaz').length,
-            wiki: getStore('wiki').length,
-            date: localStorage.getItem('reg_date') || "Давно"
-        };
-        document.getElementById('profile-stats').innerHTML = `
-            <strong>НИК:</strong> ${userNick}<br>
-            <strong>ОБЩИЙ ОПЫТ:</strong> ${userXP} XP<br>
-            <strong>В КОМАНДЕ С:</strong> ${stats.date}<br>
-            <strong>ОТЧЕТОВ:</strong> ${stats.posts}<br>
-            <strong>СООБЩЕНИЙ:</strong> ${stats.forum}<br>
-            <strong>СТАТЕЙ ВИКИ:</strong> ${stats.wiki}<br>
-            <strong>СТАТУС:</strong> <span style="color:#0f0">ОНЛАЙН (ЛОКАЛЬНО)</span>
-        `;
-    }
-
     // --- СЕКЦИИ ---
-    function sendPost() {
+    async function sendPost() {
         const t = document.getElementById('t-title').value, b = document.getElementById('t-body').value;
         if(t && b && checkCD()) {
-            let p = getStore('posts'); p.unshift({t, b, d: new Date().toLocaleString()});
-            setStore('posts', p); addXP(10); loadBlog();
+            await supabase.from('posts').insert([{ t, b, nick: userNick }]);
+            addXP(10); loadBlog();
+            document.getElementById('t-title').value = ''; document.getElementById('t-body').value = '';
         }
     }
-    function loadBlog() {
+
+    async function loadBlog() {
+        const { data } = await supabase.from('posts').select('*').order('id', { ascending: false });
         const f = document.getElementById('feed'); f.innerHTML = '';
-        getStore('posts').forEach(p => { f.innerHTML += `<div class="post-card"><h2>${p.t}</h2><p>${p.b}</p><small>${p.d}</small></div>`; });
+        if(data) data.forEach(p => {
+            f.innerHTML += `<div class="post-card"><h2>${p.t}</h2><p>${p.b}</p><small>Автор: ${p.nick}</small></div>`;
+        });
     }
 
-    function setForum(c) { currentForumCat = c; loadForum(c); }
-    function loadForum(c) {
-        document.getElementById('f-btn-flud').className = c==='flud'?'active':'';
-        document.getElementById('f-btn-zalaz').className = c==='zalaz'?'active':'';
-        const f = document.getElementById('forum-feed'); f.innerHTML = '';
-        getStore('forum_'+c).forEach(m => { f.innerHTML += `<div style="padding:10px; border-bottom:1px solid var(--y)"><b>${userNick}:</b> ${m.msg}</div>`; });
-    }
-    function sendForum() {
-        const m = document.getElementById('f-msg').value;
-        if(m && checkCD()) {
-            let ms = getStore('forum_'+currentForumCat); ms.unshift({msg:m});
-            setStore('forum_'+currentForumCat, ms); addXP(5); loadForum(currentForumCat);
+    async function sendForum() {
+        const msg = document.getElementById('f-msg').value;
+        if(msg && checkCD()) {
+            await supabase.from('forum').insert([{ msg, nick: userNick, category: currentForumCat }]);
+            addXP(5); loadForum(currentForumCat);
             document.getElementById('f-msg').value = '';
         }
     }
 
-    function saveWiki() {
-        const o = document.getElementById('w-obj').value, d = document.getElementById('w-desc').value;
-        if(o && d && checkCD()) {
-            let w = getStore('wiki');
-            const data = { o, d, id: Date.now() };
-            if(tempCoord) { data.mX = tempCoord.x; data.mY = tempCoord.y; data.mF = tempCoord.f; }
-            w.push(data); setStore('wiki', w); addXP(15); loadWiki();
-            tempCoord = null; document.getElementById('w-obj').value = ''; document.getElementById('w-desc').value = '';
-        }
-    }
-    function loadWiki() {
-        const f = document.getElementById('wiki-feed'); f.innerHTML = '';
-        getStore('wiki').forEach(w => {
-            let btn = w.mF ? `<button class="btn-jump" onclick="jumpToMap('${w.mF}', ${w.mX}, ${w.mY})">📍 ПОКАЗАТЬ НА КАРТЕ</button>` : '';
-            f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p>${btn}</div>`;
+    async function loadForum(c) {
+        currentForumCat = c;
+        document.getElementById('f-btn-flud').className = c==='flud'?'active':'';
+        document.getElementById('f-btn-zalaz').className = c==='zalaz'?'active':'';
+        const { data } = await supabase.from('forum').select('*').eq('category', c).order('id', { ascending: false });
+        const f = document.getElementById('forum-feed'); f.innerHTML = '';
+        if(data) data.forEach(m => {
+            f.innerHTML += `<div style="padding:10px; border-bottom:1px solid var(--y)"><b>${m.nick}:</b> ${m.msg}</div>`;
         });
     }
 
-    function jumpToMap(f, x, y) {
-        switchTab('map-page'); setMap(f);
-        setTimeout(() => {
-            const win = document.getElementById('map-window'); const img = document.getElementById('map-img');
-            win.scrollLeft = (img.clientWidth * (x/100)) - (win.clientWidth/2);
-            win.scrollTop = (img.clientHeight * (y/100)) - (win.clientHeight/2);
-        }, 300);
+    async function saveWiki() {
+        const o = document.getElementById('w-obj').value, d = document.getElementById('w-desc').value;
+        if(o && d && checkCD()) {
+            const payload = { o, d };
+            if(tempCoord) { payload.mX = tempCoord.x; payload.mY = tempCoord.y; payload.mF = tempCoord.f; }
+            await supabase.from('wiki').insert([payload]);
+            tempCoord = null; document.getElementById('w-obj').value = ''; document.getElementById('w-desc').value = '';
+            addXP(15); loadWiki();
+        }
+    }
+
+    async function loadWiki() {
+        const { data } = await supabase.from('wiki').select('*').order('id', { ascending: false });
+        const f = document.getElementById('wiki-feed'); f.innerHTML = '';
+        if(data) data.forEach(w => {
+            let btn = w.mF ? `<button class="btn-jump" onclick="jumpToMap('${w.mF}', ${w.mX}, ${w.mY})">📍 НА КАРТУ</button>` : '';
+            f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p>${btn}</div>`;
+        });
     }
 
     // --- СИСТЕМНОЕ ---
@@ -324,10 +300,31 @@
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         if(document.getElementById('nav-'+id)) document.getElementById('nav-'+id).classList.add('active');
+        if(id === 'profile-page') renderProfile();
     }
+
+    function renderProfile() {
+        document.getElementById('profile-stats').innerHTML = `
+            <strong>НИК:</strong> ${userNick}<br>
+            <strong>ОПЫТ:</strong> ${userXP} XP<br>
+            <strong>В КОМАНДЕ С:</strong> ${localStorage.getItem('reg_date')}<br>
+            <strong>СТАТУС:</strong> <span style="color:#0f0">В СЕТИ</span>
+        `;
+    }
+
+    function jumpToMap(f, x, y) {
+        setMap(f); switchTab('map-page');
+        setTimeout(() => {
+            const win = document.getElementById('map-window'); const img = document.getElementById('map-img');
+            win.scrollLeft = (img.clientWidth * (x/100)) - (win.clientWidth/2);
+            win.scrollTop = (img.clientHeight * (y/100)) - (win.clientHeight/2);
+        }, 500);
+    }
+
     function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
-    function changeTheme(t) { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
-    function resetData() { if(confirm("ЭТО УДАЛИТ ВСЕ ТВОИ ЗАПИСИ. УВЕРЕН?")) { localStorage.clear(); location.reload(); } }
+    function changeTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
+    function zoomMap(v) { document.getElementById('map-area').style.width = v + "%"; }
+    function resetData() { if(confirm("УДАЛИТЬ ПРОГРЕСС XP?")) { localStorage.setItem('digger_xp', '0'); location.reload(); } }
 </script>
 </body>
 </html>
