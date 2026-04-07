@@ -6,7 +6,7 @@
     <title>Orsk Digger Project | Online</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     
-    <!-- Подключаем библиотеку через более стабильный сервер Google -->
+    <!-- Самый надежный источник библиотеки от Google -->
     <script src="https://googleapis.com"></script>
     
     <style>
@@ -34,15 +34,15 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         #map-window { width: 100%; height: 600px; border: 4px solid var(--y); background: #000; overflow: auto; position: relative; }
-        #map-area { position: relative; display: inline-block; min-width: 100%; }
+        #map-area { position: relative; display: inline-block; min-width: 100%; transition: width 0.2s; }
         #map-img { display: block; width: 100%; cursor: crosshair; }
         .marker { position: absolute; width: 22px; height: 22px; background: var(--y); border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; z-index: 10; box-shadow: 0 0 10px #000; }
 
         .form-section { background: var(--g); padding: 30px; border: 3px solid var(--y); margin-bottom: 30px; }
-        input, textarea { width: 100%; padding: 15px; margin: 10px 0; background: var(--b); border: 1px solid var(--y); color: var(--text); font-family: inherit; box-sizing: border-box; }
+        input, textarea { width: 100%; padding: 15px; margin: 10px 0; background: var(--b); border: 1px solid var(--y); color: var(--text); font-family: inherit; box-sizing: border-box; font-size: 16px; }
         .btn-send { background: var(--y); color: var(--b); border: none; padding: 20px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; border: 2px solid var(--b); }
 
-        .post-card { background: var(--g); padding: 25px; margin-bottom: 20px; border-left: 10px solid var(--y); box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
+        .post-card { background: var(--g); padding: 25px; margin-bottom: 20px; border-left: 10px solid var(--y); position: relative; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
         footer { background: var(--b); color: var(--y); text-align: center; padding: 35px; border-top: 5px solid var(--y); margin-top: 50px; font-weight: 900; text-transform: uppercase; }
     </style>
 </head>
@@ -52,7 +52,7 @@
     <img src="assets/logo.png" class="logo-img" onclick="playMeow()">
     <h1>ORSK DIGGER PROJECT</h1>
     <div class="lvl-box">
-        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Инициализация...</span>
+        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Поиск библиотеки...</span>
         <div class="xp-bar"><div id="xp-fill"></div></div>
         <div id="xp-text" style="font-size: 13px; font-weight: bold; margin-top: 5px;">0 XP</div>
     </div>
@@ -63,7 +63,6 @@
         <button onclick="switchTab('map-page')" id="nav-map-page" class="active">КАРТА</button>
         <button onclick="switchTab('blog-page')" id="nav-blog-page">АРХИВ</button>
         <button onclick="switchTab('forum-page')" id="nav-forum-page">ФОРУМ</button>
-        <button onclick="switchTab('wiki-page')" id="nav-wiki-page">ВИКИ</button>
         <button onclick="switchTab('profile-page')" id="nav-profile-page">ПРОФИЛЬ</button>
         <select onchange="changeTheme(this.value)">
             <option value="default">🌐 СТАНДАРТ</option>
@@ -98,10 +97,6 @@
         <div id="forum-feed"></div>
     </div>
 
-    <div id="wiki-page" class="page">
-        <div id="wiki-feed"></div>
-    </div>
-
     <div id="profile-page" class="page">
         <div class="form-section">
             <h2 id="prof-nick">...</h2>
@@ -111,38 +106,45 @@
     </div>
 </div>
 
-<footer>ORSK DIGGER 2024</footer>
+<footer>КТО ЗАДУДОСИТ ЭТОТ САЙТ ТОТ ПИДОРАС</footer>
 
 <script>
     const URL = 'https://supabase.co';
     const KEY = 'sb_publishable_TMgSn4UaJ1bovISkRi5ifA_8BrIdZCA';
     let db;
+    let userNick = localStorage.getItem('digger_nick');
 
-    async function connect() {
-        try {
-            // Ждем немного, пока библиотека подгрузится из сети
-            if (!window.supabase) {
-                document.getElementById('lvl-text').innerText = "ОШИБКА: Библиотека не загружена. Включи VPN и обнови страницу!";
-                return;
+    // Функция цикличной проверки библиотеки
+    function startConnect() {
+        let attempts = 0;
+        const checkLibrary = setInterval(() => {
+            attempts++;
+            if (window.supabase) {
+                clearInterval(checkLibrary);
+                try {
+                    db = window.supabase.createClient(URL, KEY);
+                    document.getElementById('lvl-text').innerText = "Статус: ОНЛАЙН";
+                    initApp();
+                } catch(e) {
+                    document.getElementById('lvl-text').innerText = "ОШИБКА КОНФИГУРАЦИИ";
+                }
+            } else if (attempts > 50) {
+                clearInterval(checkLibrary);
+                document.getElementById('lvl-text').innerText = "НУЖЕН VPN ДЛЯ СВЯЗИ";
+                alert("Библиотека заблокирована вашим провайдером. Включите VPN и обновите страницу.");
             }
-            db = window.supabase.createClient(URL, KEY);
-            document.getElementById('lvl-text').innerText = "Статус: ОНЛАЙН";
-            initApp();
-        } catch(e) {
-            document.getElementById('lvl-text').innerText = "ОШИБКА СЕТИ!";
-        }
+        }, 100);
     }
 
-    let userNick = localStorage.getItem('digger_nick');
     if (!userNick) {
         let n = prompt("ТВОЙ ПОЗЫВНОЙ:");
         if (n) { 
-            localStorage.setItem('digger_nick', n); 
+            localStorage.setItem('digger_nick', n.trim()); 
             localStorage.setItem('digger_xp', '0');
             location.reload(); 
         }
     } else {
-        connect();
+        startConnect();
     }
 
     async function initApp() {
@@ -150,6 +152,7 @@
         loadBlog();
         loadForum();
         renderMarkers();
+        changeTheme(localStorage.getItem('site_theme') || 'default');
     }
 
     function updateXPUI() {
@@ -158,39 +161,38 @@
         document.getElementById('xp-fill').style.width = Math.min(xp, 100) + "%";
     }
 
-    // --- ФУНКЦИИ БАЗЫ ---
     async function sendPost() {
         const t = document.getElementById('t-title').value, b = document.getElementById('t-body').value;
-        if(!t || !b) return;
+        if(!t || !b || !db) return;
         const { error } = await db.from('posts').insert([{ t, b, nick: userNick }]);
-        if(error) alert(error.message); else { 
-            alert("Опубликовано!"); 
-            addXP(10); loadBlog();
-            document.getElementById('t-title').value = ''; document.getElementById('t-body').value = '';
-        }
+        if(error) alert(error.message); else { addXP(10); loadBlog(); }
     }
 
     async function loadBlog() {
+        if(!db) return;
         const { data } = await db.from('posts').select('*').order('id', { ascending: false });
-        if(data) document.getElementById('feed').innerHTML = data.map(p => `<div class="post-card"><b>${p.nick}</b><h3>${p.t}</h3><p>${p.b}</p></div>`).join('');
+        if(data) document.getElementById('feed').innerHTML = data.map(p => `
+            <div class="post-card"><b>${p.nick}</b><h3>${p.t}</h3><p>${p.b}</p></div>
+        `).join('');
     }
 
     async function sendForum() {
         const msg = document.getElementById('f-msg').value;
-        if(!msg) return;
+        if(!msg || !db) return;
         const { error } = await db.from('forum').insert([{ msg, nick: userNick, category: 'flud' }]);
-        if(error) alert(error.message); else { 
-            addXP(5); loadForum();
-            document.getElementById('f-msg').value = '';
-        }
+        if(error) alert(error.message); else { addXP(5); loadForum(); document.getElementById('f-msg').value = ''; }
     }
 
     async function loadForum() {
+        if(!db) return;
         const { data } = await db.from('forum').select('*').order('id', { ascending: false });
-        if(data) document.getElementById('forum-feed').innerHTML = data.map(m => `<div style="border-bottom:1px solid var(--y); padding:10px;"><b>${m.nick}:</b> ${m.msg}</div>`).join('');
+        if(data) document.getElementById('forum-feed').innerHTML = data.map(m => `
+            <div style="border-bottom:1px solid var(--y); padding:10px;"><b>${m.nick}:</b> ${m.msg}</div>
+        `).join('');
     }
 
     async function addMarker(e) {
+        if(!db) return;
         const rect = e.target.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
         const note = prompt("Что тут?");
@@ -201,6 +203,7 @@
     }
 
     async function renderMarkers() {
+        if(!db) return;
         const { data } = await db.from('markers').select('*');
         const layer = document.getElementById('markers-layer'); layer.innerHTML = '';
         if(data) data.forEach(m => {
@@ -225,6 +228,7 @@
         }
     }
 
+    function changeTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
     function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
 </script>
 </body>
