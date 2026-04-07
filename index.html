@@ -3,55 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORSK DIGGER PROJECT | LENKOM EDITION</title>
-    <!-- Пиксельный шрифт для темы ПНВ -->
+    <title>ORSK DIGGER PROJECT | ULTIMATE</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <script src="https://jsdelivr.net"></script>
     <style>
         :root { --y: #ffcc00; --b: #0a0a0a; --g: #1a1a1a; --text: #e0e0e0; --font: 'Courier New', monospace; }
         
-        /* ТЕМА ПНВ (ЗЕБРА) С ПИКСЕЛЬНЫМ ШРИФТОМ */
-        [data-theme="stalker"] { 
-            --y: #00ff41; --b: #001100; --g: #002200; --text: #00ff41; 
-            --font: 'Press Start 2P', cursive;
-        }
-        [data-theme="stalker"] body { font-size: 11px; line-height: 1.6; }
-        [data-theme="stalker"] .btn-send { font-size: 10px; }
+        [data-theme="stalker"] { --y: #00ff41; --b: #001100; --g: #002200; --text: #00ff41; --font: 'Press Start 2P', cursive; }
+        [data-theme="stalker"] body { font-size: 11px; }
+        [data-theme="stalker"] .card { border: 1px solid var(--y); box-shadow: 0 0 10px rgba(0,255,65,0.2); }
+
+        [data-theme="boykisser"] { --y: #ff80ab; --b: #fff0f6; --g: #ffdae9; --text: #880e4f; }
+        [data-theme="boykisser"] header { background: #ff80ab; color: #fff; }
+
+        [data-theme="bw"] { --y: #ffffff; --b: #000000; --g: #111111; --text: #ffffff; }
 
         body { background: var(--b); color: var(--text); font-family: var(--font); margin: 0; transition: 0.3s; }
         .container { max-width: 1000px; width: 95%; margin: 0 auto; padding-bottom: 50px; }
         header { background: var(--y); color: var(--b); padding: 30px 0; text-align: center; border-bottom: 5px solid #000; }
         
         nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 25px 0; }
-        nav button, nav select { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 12px; cursor: pointer; font-family: inherit; font-weight: bold; }
+        nav button { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 12px; cursor: pointer; font-family: inherit; font-weight: bold; }
         nav button.active { background: var(--y); color: var(--b); }
 
         .page { display: none; min-height: 400px; }
         .page.active { display: block; }
-        .card { background: var(--g); padding: 20px; border-left: 10px solid var(--y); margin-bottom: 15px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
+        .card { background: var(--g); padding: 20px; border-left: 10px solid var(--y); margin-bottom: 15px; }
         
         input, textarea, select { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid var(--y); color: #fff; box-sizing: border-box; font-family: inherit; }
-        .btn-send { background: var(--y); color: var(--b); border: none; padding: 20px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; border: 2px solid var(--b); font-family: inherit; }
+        .btn-send { background: var(--y); color: var(--b); border: none; padding: 15px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; font-family: inherit; margin-top: 5px; }
+        .btn-send.small { width: auto; padding: 10px 20px; margin-right: 5px; }
 
-        #map-window { width: 100%; height: 550px; border: 4px solid var(--y); overflow: auto; position: relative; background: #000; }
+        #map-window { width: 100%; height: 500px; border: 4px solid var(--y); overflow: auto; position: relative; background: #000; }
         #map-area { position: relative; display: inline-block; }
-        .marker { position: absolute; width: 22px; height: 22px; border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; z-index: 10; }
+        .marker { position: absolute; width: 20px; height: 20px; border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; z-index: 10; }
         
-        .cat-underground { background: #555 !important; }
-        .cat-surface { background: #00ff41 !important; }
-        .cat-loot { background: #ffcc00 !important; }
-        .cat-guard { background: #ff0000 !important; animation: blink 0.8s infinite; }
+        .cat-guard { background: #f00 !important; animation: blink 0.8s infinite; }
         @keyframes blink { 50% { opacity: 0.2; } }
-
-        .map-nav { text-align: center; margin-bottom: 15px; }
-        .map-nav button { background: var(--g); color: var(--y); border: 1px solid var(--y); padding: 10px 20px; cursor: pointer; font-family: inherit; margin: 0 5px; }
     </style>
 </head>
 <body>
 
 <header>
     <h1 onclick="playMeow()">ORSK DIGGER PROJECT</h1>
-    <div id="status-bar">0 XP | ПОДКЛЮЧЕНИЕ К СЕТИ...</div>
+    <div id="status-bar">ЗАГРУЗКА...</div>
 </header>
 
 <div class="container">
@@ -60,17 +55,14 @@
         <button onclick="switchTab('wiki-page')">ВИКИ</button>
         <button onclick="switchTab('blog-page')">ОТЧЁТЫ</button>
         <button onclick="switchTab('forum-page')">ФОРУМ</button>
-        <select onchange="changeTheme(this.value)">
-            <option value="default">🌐 СТАНДАРТ</option>
-            <option value="stalker">📟 ПНВ "ЗЕБРА"</option>
-            <option value="bw">☢ МОНОХРОМ</option>
-        </select>
+        <button onclick="switchTab('profile-page')">ПРОФИЛЬ</button>
     </nav>
 
+    <!-- КАРТА -->
     <div id="map-page" class="page active">
-        <div class="map-nav">
-            <button onclick="changeMap('assets/maposn.jpg')">ОСНОВНАЯ КАРТА</button>
-            <button onclick="changeMap('assets/map_lenkom.jpg')">КАРТА ЛЕНКОМА</button>
+        <div style="text-align:center; margin-bottom:10px;">
+            <button onclick="changeMap('assets/maposn.jpg')" class="btn-send small">ОСНОВНАЯ</button>
+            <button onclick="changeMap('assets/map_lenkom.jpg')" class="btn-send small">ЛЕНКОМ</button>
         </div>
         <div id="map-window">
             <div id="map-area">
@@ -80,48 +72,65 @@
         </div>
     </div>
 
+    <!-- ВИКИ -->
     <div id="wiki-page" class="page">
         <div class="card">
             <h3>📝 ВНЕСТИ В БАЗУ</h3>
             <input type="text" id="wiki-t" placeholder="Название объекта">
-            <textarea id="wiki-d" placeholder="История, описание, состояние..."></textarea>
-            <button class="btn-send" onclick="sendWiki()">ДОБАВИТЬ В ВИКИ</button>
+            <textarea id="wiki-d" placeholder="Описание, история, охрана..."></textarea>
+            <button class="btn-send" onclick="sendWiki()">СОХРАНИТЬ</button>
         </div>
         <div id="wiki-list"></div>
     </div>
 
+    <!-- ОТЧЕТЫ -->
     <div id="blog-page" class="page">
         <div class="card">
-            <h3>📸 ОТЧЁТ О ЗАЛАЗЕ</h3>
-            <input type="text" id="post-t" placeholder="Где были?">
-            <textarea id="post-b" placeholder="Как всё прошло..."></textarea>
+            <h3>📸 НОВЫЙ ОТЧЁТ</h3>
+            <input type="text" id="post-t" placeholder="Объект залаза">
+            <textarea id="post-b" placeholder="Как это было..."></textarea>
             <button class="btn-send" onclick="sendPost()">ОПУБЛИКОВАТЬ</button>
         </div>
         <div id="feed"></div>
     </div>
 
+    <!-- ФОРУМ С ВЕТКАМИ -->
     <div id="forum-page" class="page">
+        <div style="margin-bottom: 10px;">
+            <button onclick="switchForum('flood')" id="f-btn-flood" class="btn-send small active">ФЛУДИЛКА</button>
+            <button onclick="switchForum('talk')" id="f-btn-talk" class="btn-send small">ОБСУЖДЕНИЕ ЗАЛАЗОВ</button>
+        </div>
         <div class="card">
-            <textarea id="forum-m" placeholder="Сообщение в чат..."></textarea>
+            <textarea id="forum-m" placeholder="Сообщение..."></textarea>
             <button class="btn-send" onclick="sendForum()">ОТПРАВИТЬ</button>
         </div>
         <div id="forum-feed"></div>
     </div>
+
+    <!-- ПРОФИЛЬ -->
+    <div id="profile-page" class="page">
+        <div class="card">
+            <h2 id="prof-nick">...</h2>
+            <p id="prof-rank">РАНГ: ...</p>
+            <hr>
+            <p>СМЕНИТЬ ТЕМУ:</p>
+            <select onchange="changeTheme(this.value)">
+                <option value="default">🌐 СТАНДАРТ</option>
+                <option value="stalker">📟 ПНВ "ЗЕБРА"</option>
+                <option value="boykisser">✿ BOYKISSER :3</option>
+                <option value="bw">☢ МОНОХРОМ</option>
+            </select>
+            <button onclick="resetData()" class="btn-send" style="background:#500; color:#fff; margin-top:20px;">СБРОС ПРОФИЛЯ</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // --- ПИРИНГОВАЯ СЕТЬ ---
-    const gun = Gun([
-        'https://herokuapp.com',
-        'https://peer.ooo',
-        'https://herokuapp.com'
-    ]);
-    const db = gun.get('orsk_digger_final_v5');
+    const gun = Gun(['https://herokuapp.com', 'https://peer.ooo']);
+    const db = gun.get('orsk_digger_final_v6');
 
-    let user = { 
-        nick: localStorage.getItem('d_nick') || "Аноним", 
-        xp: parseInt(localStorage.getItem('d_xp') || "0") 
-    };
+    let user = { nick: localStorage.getItem('d_nick') || "Аноним", xp: parseInt(localStorage.getItem('d_xp') || "0") };
+    let currentBranch = 'flood';
 
     window.onload = () => {
         if (!localStorage.getItem('d_nick')) {
@@ -135,7 +144,10 @@
 
     function updateXP() {
         localStorage.setItem('d_xp', user.xp);
-        document.getElementById('status-bar').innerText = `${user.nick.toUpperCase()} | ${user.xp} XP | ОНЛАЙН`;
+        document.getElementById('status-bar').innerText = `${user.nick} | ${user.xp} XP`;
+        document.getElementById('prof-nick').innerText = user.nick;
+        const ranks = ["Новичок", "Крыса", "Лазальщик", "Диггер", "Легенда"];
+        document.getElementById('prof-rank').innerText = "РАНГ: " + ranks[Math.min(Math.floor(user.xp/50), 4)];
     }
 
     function initSync() {
@@ -148,36 +160,62 @@
             document.getElementById('feed').prepend(div);
         });
 
-        // Форум
-        db.get('chat').map().on((data, id) => {
-            if (!data || document.getElementById('msg-'+id)) return;
-            const div = document.createElement('div');
-            div.id = 'msg-'+id; div.style = "border-bottom:1px solid #333; padding:10px;";
-            div.innerHTML = `<b>${data.nick}</b>: ${data.m}`;
-            document.getElementById('forum-feed').prepend(div);
-        });
-
         // Карта
         db.get('markers').map().on((data, id) => {
             if (!data || document.getElementById('m-'+id)) return;
             const m = document.createElement('div');
-            m.id = 'm-'+id; m.className = `marker cat-${data.cat}`;
+            m.id = 'm-'+id; m.className = `marker cat-${data.cat || 'surface'}`;
             m.style = `left:${data.x}%; top:${data.y}%;`;
-            m.onclick = () => alert(`ОБЪЕКТ: ${data.n}\nКАТЕГОРИЯ: ${data.catName}\nДОБАВИЛ: ${data.nick}`);
+            m.onclick = () => alert(data.n);
             document.getElementById('markers-layer').appendChild(m);
         });
 
         // Вики
         db.get('wiki').map().on((data, id) => {
-            if (!data || document.getElementById('wiki-'+id)) return;
+            if (!data || document.getElementById('w-'+id)) return;
             const div = document.createElement('div');
-            div.id = 'wiki-'+id; div.className = 'card';
-            div.innerHTML = `<h2>${data.t}</h2><p>${data.d}</p><small>Автор: ${data.nick}</small>`;
+            div.id = 'w-'+id; div.className = 'card';
+            div.innerHTML = `<h3>${data.t}</h3><p>${data.d}</p><small>Автор: ${data.nick}</small>`;
             document.getElementById('wiki-list').prepend(div);
+        });
+
+        // Запуск форума
+        switchForum('flood');
+    }
+
+    // --- ФУНКЦИИ ФОРУМА ---
+    function switchForum(branch) {
+        currentBranch = branch;
+        document.getElementById('f-btn-flood').classList.toggle('active', branch === 'flood');
+        document.getElementById('f-btn-talk').classList.toggle('active', branch === 'talk');
+        document.getElementById('forum-feed').innerHTML = '';
+        
+        db.get('chat_' + branch).map().on((data, id) => {
+            if (!data || document.getElementById('msg-'+id) || currentBranch !== branch) return;
+            const div = document.createElement('div');
+            div.id = 'msg-'+id; div.style = "border-bottom:1px solid #444; padding:10px;";
+            div.innerHTML = `<b>${data.nick}</b>: ${data.m}`;
+            document.getElementById('forum-feed').prepend(div);
         });
     }
 
-    // --- ОТПРАВКА (ИСПРАВЛЕНО) ---
+    function sendForum() {
+        const m = document.getElementById('forum-m').value;
+        if(!m) return;
+        db.get('chat_' + currentBranch).set({ nick: user.nick, m: m });
+        user.xp += 2; updateXP();
+        document.getElementById('forum-m').value = '';
+    }
+
+    // --- ОСТАЛЬНОЕ ---
+    function sendWiki() {
+        const t = document.getElementById('wiki-t').value, d = document.getElementById('wiki-d').value;
+        if(!t || !d) return;
+        db.get('wiki').set({ nick: user.nick, t, d });
+        user.xp += 20; updateXP();
+        document.getElementById('wiki-t').value = ''; document.getElementById('wiki-d').value = '';
+    }
+
     function sendPost() {
         const t = document.getElementById('post-t').value, b = document.getElementById('post-b').value;
         if(!t || !b) return;
@@ -186,34 +224,13 @@
         document.getElementById('post-t').value = ''; document.getElementById('post-b').value = '';
     }
 
-    function sendForum() {
-        const m = document.getElementById('forum-m').value;
-        if(!m) return;
-        db.get('chat').set({ nick: user.nick, m });
-        user.xp += 2; updateXP();
-        document.getElementById('forum-m').value = '';
-    }
-
-    function sendWiki() {
-        const t = document.getElementById('wiki-t').value, d = document.getElementById('wiki-d').value;
-        if(!t || !d) return;
-        db.get('wiki').set({ nick: user.nick, t, d });
-        user.xp += 30; updateXP();
-        document.getElementById('wiki-t').value = ''; document.getElementById('wiki-d').value = '';
-    }
-
     function addMarker(e) {
         const rect = e.target.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
         const n = prompt("НАЗВАНИЕ:");
-        if(!n) return;
-        const cat = prompt("1.Подземка 2.Наземка 3.Хабар 4.Охрана") || "2";
-        const cats = {"1":{id:"underground",n:"Подземка"},"2":{id:"surface",n:"Наземка"},"3":{id:"loot",n:"Хабар"},"4":{id:"guard",n:"Охрана"}};
-        const sel = cats[cat];
-        db.get('markers').set({ x, y, n, cat: sel.id, catName: sel.n, nick: user.nick });
+        if(n) db.get('markers').set({ x, y, n, nick: user.nick, cat: 'surface' });
     }
 
-    // --- ИНТЕРФЕЙС ---
     function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -222,12 +239,8 @@
     }
 
     function changeMap(src) { document.getElementById('map-img').src = src; }
-
-    function changeTheme(v) {
-        document.documentElement.setAttribute('data-theme', v);
-        localStorage.setItem('s_theme', v);
-    }
-
+    function changeTheme(v) { document.documentElement.setAttribute('data-theme', v); localStorage.setItem('s_theme', v); }
+    function resetData() { localStorage.clear(); location.reload(); }
     function playMeow() { new Audio('https://myinstants.com').play().catch(()=>{}); }
 </script>
 </body>
