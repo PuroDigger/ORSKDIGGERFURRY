@@ -6,7 +6,7 @@
     <title>Orsk Digger Project | Online</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     
-    <!-- Используем надежный CDN. Если он не загрузится, сработает защита в коде -->
+    <!-- Используем CDNJ — самый надежный источник -->
     <script src="https://cloudflare.com"></script>
     
     <style>
@@ -91,7 +91,6 @@
         </div>
     </div>
 
-    <!-- Остальные секции (Blog, Forum, Wiki, Profile) остаются без изменений -->
     <div id="blog-page" class="page">
         <div class="form-section">
             <input type="text" id="t-title" placeholder="НАЗВАНИЕ ОБЪЕКТА">
@@ -140,28 +139,26 @@
     let db;
     let userNick, userXP = 0, currentMapFile = 'maposn.jpg', currentForumCat = 'flud', lastAction = 0;
 
-    // --- БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ ---
+    // --- УЛУЧШЕННАЯ ИНИЦИАЛИЗАЦИЯ (ФИКС ОШИБОК .eq()) ---
     function initSupabase() {
         if (window.supabase) {
             try {
                 db = window.supabase.createClient(SUB_URL, SUB_KEY);
                 console.log("🔥 Supabase подключен!");
+                return;
             } catch (e) { console.error(e); }
         }
         
-        // Если база не загрузилась, создаем заглушку, чтобы функции не выдавали ошибки
-        if (!db) {
-            console.warn("⚠️ Режим офлайн. Проверь VPN.");
-            db = {
-                from: () => ({
-                    select: () => ({ 
-                        order: () => ({ eq: () => Promise.resolve({ data: [] }), data: [] }),
-                        eq: () => Promise.resolve({ data: [] }) 
-                    }),
-                    insert: () => Promise.resolve({ error: null })
-                })
-            };
-        }
+        console.warn("⚠️ Режим офлайн. Проверь VPN.");
+        // Создаем имитацию базы данных, чтобы не было ошибок TypeError
+        const mockResponse = { data: [], error: null };
+        const mockChain = {
+            select: function() { return this; },
+            eq: function() { return Promise.resolve(mockResponse); },
+            order: function() { return Promise.resolve(mockResponse); },
+            insert: function() { return Promise.resolve(mockResponse); }
+        };
+        db = { from: () => mockChain };
     }
 
     window.onload = function() {
@@ -187,13 +184,40 @@
         changeTheme(localStorage.getItem('site_theme') || 'default');
     }
 
-    // --- ФУНКЦИИ (БЛОГ, ФОРУМ, ВИКИ) ТЕПЕРЬ С ПРОВЕРКОЙ DB ---
+    // --- КАРТА ---
+    async function renderMarkers() {
+        const { data: markers } = await db.from('markers').select('*').eq('map_file', currentMapFile);
+        const layer = document.getElementById('markers-layer'); layer.innerHTML = '';
+        if (markers && markers.length > 0) {
+            markers.forEach(m => {
+                const el = document.createElement('div'); el.className = 'marker'; 
+                el.style.left = m.x + "%"; el.style.top = m.y + "%";
+                el.title = m.note;
+                layer.appendChild(el);
+            });
+        }
+    }
+
+    async function addMarker(e) {
+        if(!checkCD()) return;
+        const rect = e.target.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
+        const note = prompt("Название объекта:");
+        if(note) {
+            await db.from('markers').insert([{ note, x, y, map_file: currentMapFile }]);
+            addXP(5); await renderMarkers();
+        }
+    }
+
+    // --- КОНТЕНТ ---
     async function loadBlog() {
         const { data } = await db.from('posts').select('*').order('id', { ascending: false });
         const f = document.getElementById('feed'); f.innerHTML = '';
-        if(data) data.forEach(p => {
-            f.innerHTML += `<div class="post-card"><h2>${p.t}</h2><p>${p.b}</p><small>Автор: ${p.nick}</small></div>`;
-        });
+        if(data && data.length > 0) {
+            data.forEach(p => {
+                f.innerHTML += `<div class="post-card"><h2>${p.t}</h2><p>${p.b}</p><small>Автор: ${p.nick}</small></div>`;
+            });
+        }
     }
 
     async function sendPost() {
@@ -207,13 +231,15 @@
 
     async function loadForum(c) {
         currentForumCat = c;
-        document.getElementById('f-btn-flud').className = c==='flud'?'active':'';
-        document.getElementById('f-btn-zalaz').className = c==='zalaz'?'active':'';
-        const { data } = await db.from('forum').select('*').eq('category', c).order('id', { ascending: false });
+        document.getElementById('f-btn-flud').className = c === 'flud' ? 'active' : '';
+        document.getElementById('f-btn-zalaz').className = c === 'zalaz' ? 'active' : '';
+        const { data } = await db.from('forum').select('*').eq('category', c);
         const f = document.getElementById('forum-feed'); f.innerHTML = '';
-        if(data) data.forEach(m => {
-            f.innerHTML += `<div style="padding:10px; border-bottom:1px solid var(--y)"><b>${m.nick}:</b> ${m.msg}</div>`;
-        });
+        if(data && data.length > 0) {
+            data.sort((a, b) => b.id - a.id).forEach(m => {
+                f.innerHTML += `<div style="padding:10px; border-bottom:1px solid var(--y)"><b>${m.nick}:</b> ${m.msg}</div>`;
+            });
+        }
     }
 
     async function sendForum() {
@@ -228,9 +254,11 @@
     async function loadWiki() {
         const { data } = await db.from('wiki').select('*').order('id', { ascending: false });
         const f = document.getElementById('wiki-feed'); f.innerHTML = '';
-        if(data) data.forEach(w => {
-            f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p></div>`;
-        });
+        if(data && data.length > 0) {
+            data.forEach(w => {
+                f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p></div>`;
+            });
+        }
     }
 
     async function saveWiki() {
@@ -242,29 +270,7 @@
         }
     }
 
-    async function renderMarkers() {
-        const { data: markers } = await db.from('markers').select('*').eq('map_file', currentMapFile);
-        const layer = document.getElementById('markers-layer'); layer.innerHTML = '';
-        if(markers) markers.forEach(m => {
-            const el = document.createElement('div'); el.className = 'marker'; 
-            el.style.left = m.x + "%"; el.style.top = m.y + "%";
-            el.title = m.note;
-            layer.appendChild(el);
-        });
-    }
-
-    async function addMarker(e) {
-        if(!checkCD()) return;
-        const rect = e.target.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
-        const note = prompt("Название объекта:");
-        if(note) {
-            await db.from('markers').insert([{ note, x, y, map_file: currentMapFile }]);
-            addXP(5); await renderMarkers();
-        }
-    }
-
-    // --- ВСПОМОГАТЕЛЬНЫЕ ---
+    // --- СЕРВИСНЫЕ ---
     function checkCD() {
         const now = Date.now();
         if (now - lastAction < 5000) { alert(`☢ ПАУЗА ${Math.ceil((5000-(now-lastAction))/1000)} сек!`); return false; }
@@ -295,8 +301,7 @@
         document.getElementById('profile-stats').innerHTML = `<strong>НИК:</strong> ${userNick}<br><strong>ОПЫТ:</strong> ${userXP} XP`;
     }
     function changeTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
-    function zoomMap(v) { document.getElementById('map-area').style.width = v + "%"; }
-    function resetData() { if(confirm("Сбросить?")) { localStorage.setItem('digger_xp', '0'); location.reload(); } }
+    function resetData() { localStorage.setItem('digger_xp', '0'); location.reload(); }
     function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
 </script>
 </body>
