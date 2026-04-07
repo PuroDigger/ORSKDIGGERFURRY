@@ -6,8 +6,8 @@
     <title>Orsk Digger Project | Online</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     
-    <!-- Используем надежный CDN -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Подключаем библиотеку через более стабильный сервер Google -->
+    <script src="https://googleapis.com"></script>
     
     <style>
         :root { --y: #ffcc00; --b: #0a0a0a; --g: #1a1a1a; --text: #e0e0e0; --accent: #ffcc00; }
@@ -18,7 +18,7 @@
         .container { max-width: 1200px; width: 90%; margin: 0 auto; padding: 20px 0; flex: 1; }
         
         header { background: var(--y); color: var(--b); padding: 50px 0; text-align: center; border-bottom: 8px solid var(--accent); }
-        .logo-img { width: 250px; height: 250px; border-radius: 50%; border: 8px solid var(--b); margin-bottom: 20px; object-fit: cover; box-shadow: 0 0 40px rgba(0,0,0,0.6); cursor: pointer; transition: transform 0.1s; }
+        .logo-img { width: 250px; height: 250px; border-radius: 50%; border: 8px solid var(--b); margin-bottom: 20px; object-fit: cover; box-shadow: 0 0 40px rgba(0,0,0,0.6); cursor: pointer; }
         header h1 { margin: 0; font-size: 38px; letter-spacing: 5px; text-transform: uppercase; font-weight: 900; }
         
         .lvl-box { margin-top: 25px; background: rgba(0,0,0,0.5); display: inline-block; padding: 15px 30px; border: 2px solid var(--b); min-width: 320px; }
@@ -29,35 +29,30 @@
         nav button, nav select { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 12px 18px; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.2s; }
         nav button.active { background: var(--y); color: var(--b); }
 
-        .sub-nav { display: flex; gap: 15px; margin-bottom: 25px; }
-        .sub-nav button { flex: 1; padding: 18px; background: var(--g); color: var(--y); border: 3px solid var(--y); box-shadow: 5px 5px 0px var(--y); font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.1s; }
-        .sub-nav button.active { background: var(--y); color: var(--b); transform: translate(4px, 4px); box-shadow: 0px 0px 0px var(--y); }
-
         .page { display: none; min-height: 600px; animation: fadeIn 0.4s; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         #map-window { width: 100%; height: 600px; border: 4px solid var(--y); background: #000; overflow: auto; position: relative; }
-        #map-area { position: relative; display: inline-block; min-width: 100%; transition: width 0.2s; }
+        #map-area { position: relative; display: inline-block; min-width: 100%; }
         #map-img { display: block; width: 100%; cursor: crosshair; }
         .marker { position: absolute; width: 22px; height: 22px; background: var(--y); border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; z-index: 10; box-shadow: 0 0 10px #000; }
 
         .form-section { background: var(--g); padding: 30px; border: 3px solid var(--y); margin-bottom: 30px; }
-        input, textarea { width: 100%; padding: 15px; margin: 10px 0; background: var(--b); border: 1px solid var(--y); color: var(--text); font-family: inherit; box-sizing: border-box; font-size: 16px; }
-        .btn-send { background: var(--y); color: var(--b); border: none; padding: 20px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size: 18px; border: 2px solid var(--b); }
+        input, textarea { width: 100%; padding: 15px; margin: 10px 0; background: var(--b); border: 1px solid var(--y); color: var(--text); font-family: inherit; box-sizing: border-box; }
+        .btn-send { background: var(--y); color: var(--b); border: none; padding: 20px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; border: 2px solid var(--b); }
 
-        .post-card { background: var(--g); padding: 25px; margin-bottom: 20px; border-left: 10px solid var(--y); position: relative; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
-        
-        footer { background: var(--b); color: var(--y); text-align: center; padding: 35px; border-top: 5px solid var(--y); margin-top: 50px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+        .post-card { background: var(--g); padding: 25px; margin-bottom: 20px; border-left: 10px solid var(--y); box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
+        footer { background: var(--b); color: var(--y); text-align: center; padding: 35px; border-top: 5px solid var(--y); margin-top: 50px; font-weight: 900; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="assets/logo.png" id="main-logo" class="logo-img" onclick="playMeow()">
+    <img src="assets/logo.png" class="logo-img" onclick="playMeow()">
     <h1>ORSK DIGGER PROJECT</h1>
     <div class="lvl-box">
-        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Проверка связи...</span>
+        <span id="lvl-text" style="font-size: 18px; font-weight: bold;">Инициализация...</span>
         <div class="xp-bar"><div id="xp-fill"></div></div>
         <div id="xp-text" style="font-size: 13px; font-weight: bold; margin-top: 5px;">0 XP</div>
     </div>
@@ -78,10 +73,6 @@
     </nav>
 
     <div id="map-page" class="page active">
-        <div class="sub-nav">
-            <button onclick="setMap('maposn.jpg')" id="m-btn-osn" class="active">ОСНОВНАЯ</button>
-            <button onclick="setMap('maplenkom.png')" id="m-btn-lenkom">ЛЕНКОМ</button>
-        </div>
         <div id="map-window">
             <div id="map-area">
                 <img src="assets/maposn.jpg" id="map-img" onclick="addMarker(event)">
@@ -92,228 +83,148 @@
 
     <div id="blog-page" class="page">
         <div class="form-section">
-            <input type="text" id="t-title" placeholder="НАЗВАНИЕ ОБЪЕКТА">
+            <input type="text" id="t-title" placeholder="ОБЪЕКТ">
             <textarea id="t-body" rows="3" placeholder="ОТЧЕТ..."></textarea>
-            <button class="btn-send" onclick="sendPost()">ВНЕСТИ В АРХИВ (+10 XP)</button>
+            <button class="btn-send" onclick="sendPost()">ВНЕСТИ В АРХИВ</button>
         </div>
         <div id="feed"></div>
     </div>
 
     <div id="forum-page" class="page">
-        <div class="sub-nav">
-            <button onclick="loadForum('flud')" id="f-btn-flud" class="active">ФЛУДИЛКА</button>
-            <button onclick="loadForum('zalaz')" id="f-btn-zalaz">ОБСУЖДЕНИЕ</button>
-        </div>
         <div class="form-section">
             <textarea id="f-msg" rows="2" placeholder="СООБЩЕНИЕ..."></textarea>
-            <button class="btn-send" onclick="sendForum()">ОТПРАВИТЬ (+5 XP)</button>
+            <button class="btn-send" onclick="sendForum()">ОТПРАВИТЬ</button>
         </div>
         <div id="forum-feed"></div>
     </div>
 
     <div id="wiki-page" class="page">
-        <div class="form-section">
-            <input type="text" id="w-obj" placeholder="ИМЯ ОБЪЕКТА">
-            <textarea id="w-desc" rows="4" placeholder="ИСТОРИЯ, СОСТОЯНИЕ..."></textarea>
-            <button class="btn-send" onclick="saveWiki()">ОБНОВИТЬ ВИКИ (+15 XP)</button>
-        </div>
         <div id="wiki-feed"></div>
     </div>
 
     <div id="profile-page" class="page">
         <div class="form-section">
-            <h2 style="color: var(--y); border-bottom: 2px solid var(--y); margin-top:0;">ЛИЧНОЕ ДЕЛО ДИГГЕРА</h2>
-            <div id="profile-stats" style="font-size: 18px; line-height: 2;"></div>
-            <button class="btn-send" style="margin-top: 20px; width: auto; background: #500; color: #fff;" onclick="resetData()">СБРОСИТЬ ПРОГРЕСС</button>
+            <h2 id="prof-nick">...</h2>
+            <p id="prof-xp">XP: 0</p>
+            <button class="btn-send" onclick="localStorage.clear(); location.reload();">ВЫЙТИ / СБРОСИТЬ</button>
         </div>
     </div>
 </div>
 
-<footer>КТО ЗАДУДОСИТ ЭТОТ САЙТ ТОТ ПИДОРАС</footer>
+<footer>ORSK DIGGER 2024</footer>
 
 <script>
-    const SUB_URL = 'https://supabase.co';
-    const SUB_KEY = 'sb_publishable_TMgSn4UaJ1bovISkRi5ifA_8BrIdZCA';
-    
+    const URL = 'https://supabase.co';
+    const KEY = 'sb_publishable_TMgSn4UaJ1bovISkRi5ifA_8BrIdZCA';
     let db;
-    let userNick, userXP = 0, currentMapFile = 'maposn.jpg', currentForumCat = 'flud', lastAction = 0;
-    let isOffline = false;
 
-    // --- ИНИЦИАЛИЗАЦИЯ ---
-    function initSupabase() {
-        if (window.supabase) {
-            try {
-                db = window.supabase.createClient(SUB_URL, SUB_KEY);
-                console.log("🔥 Supabase подключен!");
-                document.getElementById('lvl-text').innerText = "Статус: Подключено";
-                isOffline = false;
+    async function connect() {
+        try {
+            // Ждем немного, пока библиотека подгрузится из сети
+            if (!window.supabase) {
+                document.getElementById('lvl-text').innerText = "ОШИБКА: Библиотека не загружена. Включи VPN и обнови страницу!";
                 return;
-            } catch (e) { console.error(e); }
+            }
+            db = window.supabase.createClient(URL, KEY);
+            document.getElementById('lvl-text').innerText = "Статус: ОНЛАЙН";
+            initApp();
+        } catch(e) {
+            document.getElementById('lvl-text').innerText = "ОШИБКА СЕТИ!";
         }
-        
-        console.warn("⚠️ Режим офлайн. Проверь VPN.");
-        document.getElementById('lvl-text').innerText = "Статус: ОФЛАЙН (Нужен VPN)";
-        isOffline = true;
-        const mockResponse = { data: [], error: { message: "ОФЛАЙН РЕЖИМ: Включи VPN для записи!" } };
-        const mockChain = {
-            select: function() { return this; },
-            eq: function() { return this; },
-            order: function() { return Promise.resolve(mockResponse); },
-            insert: function() { return Promise.resolve(mockResponse); }
-        };
-        db = { from: () => mockChain };
     }
 
-    window.onload = function() {
-        initSupabase();
-        userNick = localStorage.getItem('digger_nick');
-        if (!userNick) {
-            let n = prompt("ТВОЙ ПОЗЫВНОЙ:");
-            if (n) { 
-                localStorage.setItem('digger_nick', n.trim()); 
-                localStorage.setItem('reg_date', new Date().toLocaleDateString());
-                localStorage.setItem('digger_xp', '0');
-                location.reload(); 
-            }
-        } else { initApp(); }
-    };
+    let userNick = localStorage.getItem('digger_nick');
+    if (!userNick) {
+        let n = prompt("ТВОЙ ПОЗЫВНОЙ:");
+        if (n) { 
+            localStorage.setItem('digger_nick', n); 
+            localStorage.setItem('digger_xp', '0');
+            location.reload(); 
+        }
+    } else {
+        connect();
+    }
 
     async function initApp() {
-        updateLVLUI();
-        await loadBlog();
-        await loadForum('flud');
-        await loadWiki();
-        await renderMarkers();
-        changeTheme(localStorage.getItem('site_theme') || 'default');
+        updateXPUI();
+        loadBlog();
+        loadForum();
+        renderMarkers();
     }
 
-    // --- ФУНКЦИИ ОТПРАВКИ С АЛЕРТАМИ ---
+    function updateXPUI() {
+        let xp = parseInt(localStorage.getItem('digger_xp') || "0");
+        document.getElementById('xp-text').innerText = xp + " XP";
+        document.getElementById('xp-fill').style.width = Math.min(xp, 100) + "%";
+    }
+
+    // --- ФУНКЦИИ БАЗЫ ---
     async function sendPost() {
         const t = document.getElementById('t-title').value, b = document.getElementById('t-body').value;
-        if(t && b && checkCD()) {
-            const { error } = await db.from('posts').insert([{ t, b, nick: userNick }]);
-            if (error) return alert("Ошибка: " + error.message);
-            alert("Отчет добавлен в архив!");
-            addXP(10); await loadBlog();
+        if(!t || !b) return;
+        const { error } = await db.from('posts').insert([{ t, b, nick: userNick }]);
+        if(error) alert(error.message); else { 
+            alert("Опубликовано!"); 
+            addXP(10); loadBlog();
             document.getElementById('t-title').value = ''; document.getElementById('t-body').value = '';
         }
     }
 
+    async function loadBlog() {
+        const { data } = await db.from('posts').select('*').order('id', { ascending: false });
+        if(data) document.getElementById('feed').innerHTML = data.map(p => `<div class="post-card"><b>${p.nick}</b><h3>${p.t}</h3><p>${p.b}</p></div>`).join('');
+    }
+
     async function sendForum() {
         const msg = document.getElementById('f-msg').value;
-        if(msg && checkCD()) {
-            const { error } = await db.from('forum').insert([{ msg, nick: userNick, category: currentForumCat }]);
-            if (error) return alert("Ошибка: " + error.message);
-            alert("Сообщение отправлено!");
-            addXP(5); await loadForum(currentForumCat);
+        if(!msg) return;
+        const { error } = await db.from('forum').insert([{ msg, nick: userNick, category: 'flud' }]);
+        if(error) alert(error.message); else { 
+            addXP(5); loadForum();
             document.getElementById('f-msg').value = '';
         }
     }
 
-    async function saveWiki() {
-        const o = document.getElementById('w-obj').value, d = document.getElementById('w-desc').value;
-        if(o && d && checkCD()) {
-            const { error } = await db.from('wiki').insert([{ o, d }]);
-            if (error) return alert("Ошибка: " + error.message);
-            alert("Вики обновлена!");
-            addXP(15); await loadWiki();
-            document.getElementById('w-obj').value = ''; document.getElementById('w-desc').value = '';
-        }
+    async function loadForum() {
+        const { data } = await db.from('forum').select('*').order('id', { ascending: false });
+        if(data) document.getElementById('forum-feed').innerHTML = data.map(m => `<div style="border-bottom:1px solid var(--y); padding:10px;"><b>${m.nick}:</b> ${m.msg}</div>`).join('');
     }
 
     async function addMarker(e) {
-        if(!checkCD()) return;
         const rect = e.target.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
-        const note = prompt("Название объекта:");
+        const note = prompt("Что тут?");
         if(note) {
-            const { error } = await db.from('markers').insert([{ note, x, y, map_file: currentMapFile }]);
-            if (error) return alert("Ошибка: " + error.message);
-            alert("Метка установлена!");
-            addXP(5); await renderMarkers();
-        }
-    }
-
-    // --- ФУНКЦИИ ЗАГРУЗКИ ---
-    async function loadBlog() {
-        const { data } = await db.from('posts').select('*').order('id', { ascending: false });
-        const f = document.getElementById('feed'); f.innerHTML = '';
-        if(data && data.length > 0) {
-            data.forEach(p => {
-                f.innerHTML += `<div class="post-card"><h2>${p.t}</h2><p>${p.b}</p><small>Автор: ${p.nick}</small></div>`;
-            });
-        }
-    }
-
-    async function loadForum(c) {
-        currentForumCat = c;
-        document.getElementById('f-btn-flud').className = c === 'flud' ? 'active' : '';
-        document.getElementById('f-btn-zalaz').className = c === 'zalaz' ? 'active' : '';
-        const { data } = await db.from('forum').select('*').eq('category', c);
-        const f = document.getElementById('forum-feed'); f.innerHTML = '';
-        if(data && data.length > 0) {
-            data.sort((a,b) => b.id - a.id).forEach(m => {
-                f.innerHTML += `<div style="padding:10px; border-bottom:1px solid var(--y)"><b>${m.nick}:</b> ${m.msg}</div>`;
-            });
-        }
-    }
-
-    async function loadWiki() {
-        const { data } = await db.from('wiki').select('*').order('id', { ascending: false });
-        const f = document.getElementById('wiki-feed'); f.innerHTML = '';
-        if(data && data.length > 0) {
-            data.forEach(w => {
-                f.innerHTML += `<div class="post-card"><h2>${w.o}</h2><p>${w.d}</p></div>`;
-            });
+            await db.from('markers').insert([{ note, x, y, map_file: 'maposn.jpg' }]);
+            renderMarkers();
         }
     }
 
     async function renderMarkers() {
-        const { data: markers } = await db.from('markers').select('*').eq('map_file', currentMapFile);
+        const { data } = await db.from('markers').select('*');
         const layer = document.getElementById('markers-layer'); layer.innerHTML = '';
-        if(markers && markers.length > 0) {
-            markers.forEach(m => {
-                const el = document.createElement('div'); el.className = 'marker'; 
-                el.style.left = m.x + "%"; el.style.top = m.y + "%";
-                el.title = m.note;
-                layer.appendChild(el);
-            });
+        if(data) data.forEach(m => {
+            const el = document.createElement('div'); el.className = 'marker'; 
+            el.style.left = m.x + "%"; el.style.top = m.y + "%"; el.title = m.note;
+            layer.appendChild(el);
+        });
+    }
+
+    function addXP(v) {
+        let xp = parseInt(localStorage.getItem('digger_xp') || "0") + v;
+        localStorage.setItem('digger_xp', xp);
+        updateXPUI();
+    }
+
+    function switchTab(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'profile-page') {
+            document.getElementById('prof-nick').innerText = userNick;
+            document.getElementById('prof-xp').innerText = "XP: " + localStorage.getItem('digger_xp');
         }
     }
 
-    // --- СЕРВИСНЫЕ ---
-    function checkCD() {
-        const now = Date.now();
-        if (now - lastAction < 5000) { alert(`☢ ПАУЗА ${Math.ceil((5000-(now-lastAction))/1000)} сек!`); return false; }
-        lastAction = now; return true;
-    }
-    function addXP(v) { 
-        userXP = parseInt(localStorage.getItem('digger_xp') || "0") + v;
-        localStorage.setItem('digger_xp', userXP);
-        updateLVLUI();
-    }
-    function updateLVLUI() {
-        userXP = parseInt(localStorage.getItem('digger_xp') || "0");
-        const ranks = [{name: "Школьник", min: 0, max: 50}, {name: "Дренажная Крыса", min: 50, max: 150}, {name: "Лазальщик", min: 150, max: 400}, {name: "Диггер", min: 400, max: 1000}, {name: "Крутэлык", min: 1000, max: 999999}];
-        let r = ranks.find((rank, i) => userXP >= rank.min && (ranks[i+1] ? userXP < ranks[i+1].min : true)) || ranks;
-        document.getElementById('lvl-text').innerText = "Статус: " + r.name;
-        let progress = r.name === "Крутэлык" ? 100 : ((userXP - r.min) / (r.max - r.min)) * 100;
-        document.getElementById('xp-fill').style.width = progress + "%";
-        document.getElementById('xp-text').innerText = `${userXP} XP`;
-    }
-    function setMap(f) { currentMapFile = f; document.getElementById('map-img').src = 'assets/' + f; renderMarkers(); }
-    function switchTab(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if(id === 'profile-page') renderProfile();
-    }
-    function renderProfile() {
-        document.getElementById('profile-stats').innerHTML = `<strong>НИК:</strong> ${userNick}<br><strong>ОПЫТ:</strong> ${userXP} XP`;
-    }
-    function changeTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('site_theme', t); }
-    function zoomMap(v) { document.getElementById('map-area').style.width = v + "%"; }
-    function resetData() { if(confirm("Сбросить?")) { localStorage.setItem('digger_xp', '0'); location.reload(); } }
     function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
 </script>
 </body>
