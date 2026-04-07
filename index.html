@@ -3,196 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORSK DIGGER PROJECT | STATIC ONLINE</title>
+    <title>ORSK DIGGER PROJECT | FREE VERSION</title>
     <style>
         :root { --y: #ffcc00; --b: #0a0a0a; --g: #1a1a1a; --text: #e0e0e0; }
+        [data-theme="bw"] { --y: #ffffff; --b: #000000; --text: #ffffff; }
         [data-theme="boykisser"] { --y: #ff80ab; --b: #fff0f6; --text: #880e4f; }
-        body { background: var(--b); color: var(--text); font-family: 'Courier New', monospace; margin: 0; transition: 0.3s; overflow-x: hidden; }
+
+        body { background: var(--b); color: var(--text); font-family: 'Courier New', monospace; margin: 0; transition: 0.3s; }
         .container { max-width: 1000px; width: 95%; margin: 0 auto; padding-bottom: 50px; }
         header { background: var(--y); color: var(--b); padding: 40px 0; text-align: center; border-bottom: 5px solid #000; }
-        .logo { width: 150px; height: 150px; border-radius: 50%; border: 5px solid #000; cursor: pointer; object-fit: cover; }
-        nav { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
-        button { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 10px 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
-        button.active { background: var(--y); color: var(--b); }
+        .logo-img { width: 180px; height: 180px; border-radius: 50%; border: 5px solid #000; cursor: pointer; object-fit: cover; }
+        
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 25px 0; }
+        nav button, nav select { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 12px 18px; cursor: pointer; font-weight: bold; font-family: inherit; font-size: 14px; }
+        nav button.active { background: var(--y); color: var(--b); }
+
         .page { display: none; min-height: 400px; }
         .page.active { display: block; }
-        .card { background: var(--g); padding: 20px; border-left: 5px solid var(--y); margin-bottom: 15px; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid var(--y); color: #fff; box-sizing: border-box; }
-        #map-window { width: 100%; height: 500px; border: 3px solid var(--y); overflow: auto; position: relative; background: #000; }
+        .card { background: var(--g); padding: 20px; border-left: 10px solid var(--y); margin-bottom: 15px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
+        
+        input, textarea { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid var(--y); color: #fff; box-sizing: border-box; }
+        .btn-send { background: var(--y); color: var(--b); border: none; padding: 20px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; border: 2px solid var(--b); }
+
+        #map-window { width: 100%; height: 500px; border: 4px solid var(--y); overflow: auto; position: relative; background: #000; }
         #map-area { position: relative; display: inline-block; }
-        .marker { position: absolute; width: 20px; height: 20px; background: var(--y); border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; }
-        .xp-bar { width: 200px; height: 10px; background: #333; margin: 10px auto; border: 1px solid #000; }
-        #xp-fill { height: 100%; background: var(--y); width: 0%; transition: 0.5s; }
-        footer { text-align: center; padding: 20px; font-size: 12px; opacity: 0.5; border-top: 1px solid var(--y); }
+        .marker { position: absolute; width: 22px; height: 22px; background: var(--y); border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; }
+        
+        .xp-bar { width: 200px; height: 12px; background: #333; margin: 15px auto; border: 1px solid #000; position: relative; }
+        #xp-fill { height: 100%; background: var(--b); width: 0%; transition: 0.5s; }
+        footer { text-align: center; padding: 35px; border-top: 5px solid var(--y); margin-top: 50px; font-weight: 900; }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="assets/logo.png" class="logo" onclick="playMeow()">
+    <img src="assets/logo.png" class="logo-img" onclick="playMeow()">
     <h1>ORSK DIGGER PROJECT</h1>
-    <div id="status-line">ПОДКЛЮЧЕНИЕ К СЕТИ...</div>
+    <div id="status">БЕСПЛАТНЫЙ РЕЖИМ</div>
     <div class="xp-bar"><div id="xp-fill"></div></div>
-    <div id="xp-val">0 XP</div>
+    <div id="xp-val" style="font-weight:bold;">0 XP</div>
 </header>
 
 <div class="container">
     <nav>
-        <button onclick="showPage('map')" id="btn-map" class="active">КАРТА</button>
-        <button onclick="showPage('blog')">АРХИВ</button>
-        <button onclick="showPage('forum')">ФОРУМ</button>
-        <button onclick="showPage('profile')">ПРОФИЛЬ</button>
-        <button onclick="setTheme()">ТЕМЫ</button>
+        <button onclick="switchTab('map-page')" id="nav-map-page" class="active">КАРТА</button>
+        <button onclick="switchTab('blog-page')">АРХИВ</button>
+        <button onclick="switchTab('forum-page')">ФОРУМ</button>
+        <button onclick="switchTab('profile-page')">ПРОФИЛЬ</button>
+        <!-- Твое старое меню с темами -->
+        <select onchange="changeTheme(this.value)">
+            <option value="default">🌐 СТАНДАРТ</option>
+            <option value="bw">☢ МОНОХРОМ</option>
+            <option value="boykisser">✿ BOYKISSER :3</option>
+        </select>
     </nav>
 
-    <div id="map" class="page active">
-        <p style="text-align: center; font-size: 12px;">Кликни по карте, чтобы поставить метку</p>
+    <div id="map-page" class="page active">
         <div id="map-window">
             <div id="map-area">
-                <img src="assets/maposn.jpg" id="map-img" onclick="handleMapClick(event)">
-                <div id="marker-layer"></div>
+                <img src="assets/maposn.jpg" id="map-img" onclick="addMarker(event)">
+                <div id="markers-layer"></div>
             </div>
         </div>
     </div>
 
-    <div id="blog" class="page">
+    <div id="blog-page" class="page">
         <div class="card">
-            <input type="text" id="post-t" placeholder="НАЗВАНИЕ ОБЪЕКТА">
-            <textarea id="post-b" placeholder="ОТЧЕТ О ЗАЛАЗЕ..."></textarea>
-            <button onclick="sendPost()" style="width:100%">ОПУБЛИКОВАТЬ</button>
+            <input type="text" id="post-t" placeholder="ОБЪЕКТ">
+            <textarea id="post-b" placeholder="ОТЧЕТ..."></textarea>
+            <button class="btn-send" onclick="sendPost()">ОПУБЛИКОВАТЬ</button>
         </div>
-        <div id="blog-feed"></div>
+        <div id="feed"></div>
     </div>
 
-    <div id="forum" class="page">
+    <div id="forum-page" class="page">
         <div class="card">
-            <textarea id="forum-m" placeholder="ТВОЕ СООБЩЕНИЕ..."></textarea>
-            <button onclick="sendForum()" style="width:100%">ОТПРАВИТЬ</button>
+            <textarea id="forum-m" placeholder="СООБЩЕНИЕ..."></textarea>
+            <button class="btn-send" onclick="sendForum()">ОТПРАВИТЬ</button>
         </div>
         <div id="forum-feed"></div>
     </div>
 
-    <div id="profile" class="page">
+    <div id="profile-page" class="page">
         <div class="card">
-            <h2 id="user-name">...</h2>
-            <p id="user-stat">Ранг: Загрузка...</p>
-            <button onclick="localStorage.clear(); location.reload();" style="background: #500;">СБРОСИТЬ ВСЁ</button>
+            <h2 id="prof-nick">...</h2>
+            <p id="prof-rank">Ранг: Загрузка</p>
+            <button class="btn-send" onclick="resetData()" style="background:#500; color:#fff;">СБРОСИТЬ ВСЁ</button>
         </div>
     </div>
 </div>
 
-<footer>КТО ЗАДУДОСИТ ТОТ ПИДОРАС</footer>
+<footer>КТО ЗАДУДОСИТ ЭТОТ САЙТ ТОТ ПИДОРАС</footer>
 
 <script>
-    // --- ТВОИ ДАННЫЕ (БЕЗОПАСНО) ---
-    const DB_URL = 'https://supabase.co';
-    const DB_KEY = 'sb_publishable_TMgSn4UaJ1bovISkRi5ifA_8BrIdZCA';
-    const HEADERS = { "apikey": DB_KEY, "Authorization": "Bearer " + DB_KEY, "Content-Type": "application/json" };
+    // --- ДАННЫЕ ---
+    let user = { 
+        nick: localStorage.getItem('d_nick'), 
+        xp: parseInt(localStorage.getItem('d_xp') || "0") 
+    };
 
-    let user = { nick: localStorage.getItem('dnick'), xp: parseInt(localStorage.getItem('dxp') || "0") };
-
-    // --- СИСТЕМА ЗАПРОСОВ (ВМЕСТО БИБЛИОТЕКИ) ---
-    async function api(table, method = 'GET', body = null) {
-        const url = `${DB_URL}/${table}?select=*${method === 'GET' ? '&order=id.desc' : ''}`;
-        try {
-            const res = await fetch(url, { method, headers: HEADERS, body: body ? JSON.stringify(body) : null });
-            if (res.ok) {
-                document.getElementById('status-line').innerText = "Статус: ОНЛАЙН";
-                return await res.json();
-            }
-        } catch (e) {
-            document.getElementById('status-line').innerText = "ОФЛАЙН (Включи VPN)";
-            return null;
-        }
-    }
-
-    // --- ЛОГИКА ---
     window.onload = () => {
         if (!user.nick) {
             let n = prompt("ТВОЙ ПОЗЫВНОЙ:");
-            if (n) { localStorage.setItem('dnick', n); location.reload(); }
+            if (n) { 
+                localStorage.setItem('d_nick', n.trim()); 
+                localStorage.setItem('d_xp', '0'); 
+                location.reload(); 
+            }
         } else {
             updateXP();
-            loadAll();
+            renderAll();
+            changeTheme(localStorage.getItem('s_theme') || 'default');
         }
     };
 
-    function loadAll() {
-        loadBlog();
-        loadForum();
-        loadMarkers();
-    }
-
     function updateXP() {
-        localStorage.setItem('dxp', user.xp);
+        localStorage.setItem('d_xp', user.xp);
         document.getElementById('xp-val').innerText = user.xp + " XP";
         document.getElementById('xp-fill').style.width = Math.min(user.xp, 100) + "%";
-        document.getElementById('user-name').innerText = user.nick;
-        const ranks = ["Школьник", "Крыса", "Лазальщик", "Диггер", "КРУТЭЛЫК"];
-        let rIdx = Math.min(Math.floor(user.xp / 100), 4);
-        document.getElementById('user-stat').innerText = "Ранг: " + ranks[rIdx];
+        document.getElementById('prof-nick').innerText = user.nick;
+        const ranks = ["Школьник", "Крыса", "Лазальщик", "Диггер", "Крутэлык"];
+        document.getElementById('prof-rank').innerText = "Ранг: " + (ranks[Math.min(Math.floor(user.xp/50), 4)]);
     }
 
-    async function sendPost() {
+    // --- ИМИТАЦИЯ ОБЩЕЙ БАЗЫ ЧЕРЕЗ LOCALSTORAGE ---
+    // (Позже это легко меняется на одну ссылку Fetch)
+    function getStore(key) { return JSON.parse(localStorage.getItem('cloud_' + key) || "[]"); }
+    function setStore(key, val) { 
+        let data = getStore(key);
+        data.unshift(val);
+        localStorage.setItem('cloud_' + key, JSON.stringify(data));
+    }
+
+    function sendPost() {
         const t = document.getElementById('post-t').value, b = document.getElementById('post-b').value;
-        if (!t || !b) return;
-        await api('posts', 'POST', { t, b, nick: user.nick });
-        user.xp += 15; updateXP(); loadBlog();
+        if(!t || !b) return;
+        setStore('posts', { nick: user.nick, t, b, date: new Date().toLocaleString() });
+        user.xp += 10; updateXP(); renderAll();
         document.getElementById('post-t').value = ''; document.getElementById('post-b').value = '';
     }
 
-    async function loadBlog() {
-        const data = await api('posts');
-        if (data) document.getElementById('blog-feed').innerHTML = data.map(p => `
-            <div class="card"><b>${p.nick}</b>: <h3>${p.t}</h3><p>${p.b}</p></div>
-        `).join('');
-    }
-
-    async function sendForum() {
-        const msg = document.getElementById('forum-m').value;
-        if (!msg) return;
-        await api('forum', 'POST', { msg, nick: user.nick, category: 'flud' });
-        user.xp += 5; updateXP(); loadForum();
+    function sendForum() {
+        const m = document.getElementById('forum-m').value;
+        if(!m) return;
+        setStore('forum', { nick: user.nick, m, date: new Date().toLocaleTimeString() });
+        user.xp += 5; updateXP(); renderAll();
         document.getElementById('forum-m').value = '';
     }
 
-    async function loadForum() {
-        const data = await api('forum');
-        if (data) document.getElementById('forum-feed').innerHTML = data.map(m => `
-            <div style="border-bottom:1px solid #333; padding:10px;"><b>${m.nick}</b>: ${m.msg}</div>
-        `).join('');
-    }
-
-    async function handleMapClick(e) {
+    function addMarker(e) {
         const rect = e.target.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
-        const note = prompt("ЧТО ТУТ?");
-        if (note) {
-            await api('markers', 'POST', { note, x, y, map_file: 'maposn.jpg' });
-            loadMarkers();
+        const n = prompt("ЧТО ТУТ?");
+        if(n) {
+            setStore('markers', { x, y, n });
+            renderAll();
         }
     }
 
-    async function loadMarkers() {
-        const data = await api('markers');
-        const layer = document.getElementById('marker-layer'); layer.innerHTML = '';
-        if (data) data.forEach(m => {
-            const el = document.createElement('div'); el.className = 'marker';
-            el.style.left = m.x + "%"; el.style.top = m.y + "%"; el.title = m.note;
-            layer.appendChild(el);
-        });
+    function renderAll() {
+        document.getElementById('feed').innerHTML = getStore('posts').map(p => `
+            <div class="card"><b>${p.nick}</b> <small>${p.date}</small><h3>${p.t}</h3><p>${p.b}</p></div>
+        `).join('');
+
+        document.getElementById('forum-feed').innerHTML = getStore('forum').map(f => `
+            <div style="border-bottom:1px solid #444; padding:10px;"><b>${f.nick}</b>: ${f.m} <small style="opacity:0.3">${f.date}</small></div>
+        `).join('');
+
+        document.getElementById('markers-layer').innerHTML = getStore('markers').map(m => `
+            <div class="marker" style="left:${m.x}%; top:${m.y}%;" title="${m.n}"></div>
+        `).join('');
     }
 
-    function showPage(id) {
+    function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        if(id !== 'profile') document.getElementById('btn-map').classList.remove('active');
+        if(event && event.target.tagName === 'BUTTON') event.target.classList.add('active');
     }
 
-    function setTheme() {
-        let t = document.body.getAttribute('data-theme') === 'boykisser' ? 'default' : 'boykisser';
-        document.body.setAttribute('data-theme', t);
+    function changeTheme(t) { 
+        document.body.setAttribute('data-theme', t); 
+        localStorage.setItem('s_theme', t); 
+    }
+
+    function resetData() { 
+        if(confirm("УДАЛИТЬ ВСЁ?")) { localStorage.clear(); location.reload(); }
     }
 
     function playMeow() { new Audio('assets/meow.mp3').play().catch(()=>{}); }
