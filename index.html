@@ -2,236 +2,181 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORSK DIGGER PROJECT | V7 SPEED</title>
-    <link href="https://googleapis.com" rel="stylesheet">
+    <title>DIGGER NET | V5</title>
     <script src="https://jsdelivr.net"></script>
     <style>
-        :root { --y: #ffcc00; --b: #0a0a0a; --g: #1a1a1a; --text: #e0e0e0; --font: 'Courier New', monospace; }
+        :root { --bg: #000; --text: #0f0; --accent: #0f0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; }
         
-        [data-theme="stalker"] { --y: #00ff41; --b: #001100; --g: #002200; --text: #00ff41; --font: 'Press Start 2P', cursive; }
-        [data-theme="stalker"] body { font-size: 11px; }
-        [data-theme="stalker"] .card { border: 1px solid var(--y); box-shadow: 0 0 10px rgba(0,255,65,0.2); }
-
-        [data-theme="boykisser"] { --y: #ff80ab; --b: #fff0f6; --g: #ffdae9; --text: #880e4f; }
-        [data-theme="boykisser"] header { background: #ff80ab; color: #fff; }
-
-        [data-theme="bw"] { --y: #ffffff; --b: #000000; --g: #111111; --text: #ffffff; }
-
-        body { background: var(--b); color: var(--text); font-family: var(--font); margin: 0; transition: 0.3s; }
-        .container { max-width: 1000px; width: 95%; margin: 0 auto; padding-bottom: 50px; }
-        header { background: var(--y); color: var(--b); padding: 25px 0; text-align: center; border-bottom: 5px solid #000; }
+        .nav { border: 1px solid var(--accent); padding: 10px; margin-bottom: 20px; display: flex; gap: 15px; }
+        .nav a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .nav a:hover { background: var(--accent); color: var(--bg); }
         
-        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
-        nav button { background: var(--g); border: 2px solid var(--y); color: var(--y); padding: 12px; cursor: pointer; font-family: inherit; font-weight: bold; }
-        nav button.active { background: var(--y); color: var(--b); }
+        .page { display: none; }
+        .active { display: block; }
 
-        .page { display: none; min-height: 400px; }
-        .page.active { display: block; }
-        .card { background: var(--g); padding: 20px; border-left: 10px solid var(--y); margin-bottom: 15px; }
+        input, textarea, select { 
+            background: transparent; border: 1px solid var(--accent); 
+            color: var(--text); padding: 8px; width: 100%; margin-bottom: 10px; box-sizing: border-box;
+        }
+        button { 
+            background: var(--accent); color: var(--bg); border: none; 
+            padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%;
+        }
+
+        .item-box { border: 1px solid var(--accent); padding: 15px; margin-top: 10px; background: rgba(255,255,255,0.05); }
+        .msg-box { border-left: 3px solid var(--accent); padding: 5px 15px; margin-bottom: 10px; }
         
-        /* ШКАЛА ОПЫТА В ПРОФИЛЕ */
-        .level-container { margin: 15px 0; }
-        .xp-bg { width: 100%; height: 20px; background: #000; border: 2px solid var(--y); position: relative; overflow: hidden; }
-        .xp-bar-fill { height: 100%; background: var(--y); width: 0%; transition: 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-        .xp-text { font-size: 10px; margin-top: 5px; display: block; opacity: 0.8; }
+        .xp-bar { width: 100%; height: 15px; border: 1px solid var(--accent); margin: 10px 0; }
+        #xp-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.5s; }
 
-        input, textarea, select { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid var(--y); color: #fff; box-sizing: border-box; font-family: inherit; }
-        .btn-send { background: var(--y); color: var(--b); border: none; padding: 15px; width: 100%; font-weight: 900; cursor: pointer; text-transform: uppercase; font-family: inherit; margin-top: 5px; }
-        .btn-send.small { width: auto; padding: 10px 20px; margin-right: 5px; }
-
-        #map-window { width: 100%; height: 500px; border: 4px solid var(--y); overflow: auto; position: relative; background: #000; }
-        #map-area { position: relative; display: inline-block; }
-        .marker { position: absolute; width: 20px; height: 20px; border: 2px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; z-index: 10; }
+        /* Темы */
+        body.old { --bg: #000; --text: #ffcc00; --accent: #ffcc00; }
+        body.boykisser { --bg: #fff; --text: #ff69b4; --accent: #ffb6c1; }
+        body.pnv { --bg: #000d00; --text: #00ff00; --accent: #004400; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1 onclick="playMeow()">ORSK DIGGER PROJECT</h1>
-    <div id="status-bar">ЛОКАЛЬНЫЙ РЕЖИМ</div>
-</header>
+<div class="nav">
+    <a onclick="route('archive')">/Архив_Объектов</a>
+    <a onclick="route('forum')">/Форум_Связь</a>
+    <a onclick="route('profile')">/Профиль</a>
+    <a onclick="route('settings')">/Настройки</a>
+</div>
 
-<div class="container">
-    <nav>
-        <button onclick="switchTab('map-page')" class="active">КАРТА</button>
-        <button onclick="switchTab('wiki-page')">ВИКИ</button>
-        <button onclick="switchTab('blog-page')">ОТЧЁТЫ</button>
-        <button onclick="switchTab('forum-page')">ФОРУМ</button>
-        <button onclick="switchTab('profile-page')">ПРОФИЛЬ</button>
-    </nav>
-
-    <div id="map-page" class="page active">
-        <div style="text-align:center; margin-bottom:10px;">
-            <button onclick="changeMap('assets/maposn.jpg')" class="btn-send small">ОСНОВНАЯ</button>
-            <button onclick="changeMap('assets/map_lenkom.jpg')" class="btn-send small">ЛЕНКОМ</button>
-        </div>
-        <div id="map-window"><div id="map-area"><img src="assets/maposn.jpg" id="map-img" onclick="addMarker(event)"><div id="markers-layer"></div></div></div>
+<!-- АРХИВ (Объекты) -->
+<div id="archive" class="page active">
+    <h2>[ ДОБАВИТЬ_НОВЫЙ_ОБЪЕКТ ]</h2>
+    <div style="border: 1px dashed var(--accent); padding: 15px; margin-bottom: 20px;">
+        <input type="text" id="obj-title" placeholder="Название объекта (ДШС, Бункер...)">
+        <input type="text" id="obj-coords" placeholder="Координаты (необязательно)">
+        <textarea id="obj-desc" placeholder="Техническое описание..."></textarea>
+        <button onclick="addArchive()">ВНЕСТИ В РЕЕСТР (+50 XP)</button>
     </div>
+    <div id="archive-list"></div>
+</div>
 
-    <div id="wiki-page" class="page">
-        <div class="card"><h3>📝 ВНЕСТИ В БАЗУ</h3><input type="text" id="wiki-t" placeholder="Название объекта"><textarea id="wiki-d" placeholder="Описание..."></textarea><button class="btn-send" onclick="sendWiki()">СОХРАНИТЬ</button></div>
-        <div id="wiki-list"></div>
+<!-- ФОРУМ (Сообщения) -->
+<div id="forum" class="page">
+    <h2>[ ОБЩИЙ_КАНАЛ_СВЯЗИ ]</h2>
+    <div style="display: flex; gap: 5px;">
+        <input type="text" id="forum-msg" placeholder="Введите сообщение...">
+        <button style="width: auto;" onclick="sendChat()">ОТПРАВИТЬ (+10 XP)</button>
     </div>
+    <div id="forum-list" style="margin-top: 20px;"></div>
+</div>
 
-    <div id="blog-page" class="page">
-        <div class="card"><h3>📸 НОВЫЙ ОТЧЁТ</h3><input type="text" id="post-t" placeholder="Где были?"><textarea id="post-b" placeholder="Текст отчета..."></textarea><button class="btn-send" onclick="sendPost()">ОПУБЛИКОВАТЬ</button></div>
-        <div id="feed"></div>
-    </div>
-
-    <div id="forum-page" class="page">
-        <div style="margin-bottom: 10px;"><button onclick="switchForum('flood')" id="f-btn-flood" class="btn-send small active">ФЛУДИЛКА</button><button onclick="switchForum('talk')" id="f-btn-talk" class="btn-send small">ЗАЛАЗЫ</button></div>
-        <div class="card"><textarea id="forum-m" placeholder="Сообщение..."></textarea><button class="btn-send" onclick="sendForum()">ОТПРАВИТЬ</button></div>
-        <div id="forum-feed"></div>
-    </div>
-
-    <div id="profile-page" class="page">
-        <div class="card">
-            <h2 id="prof-nick">ЗАГРУЗКА...</h2>
-            <div class="level-container">
-                <b id="prof-rank">РАНГ: НОВИЧОК</b>
-                <div class="xp-bg"><div id="prof-xp-fill" class="xp-bar-fill"></div></div>
-                <span id="xp-needed" class="xp-text">0 / 50 XP до след. уровня</span>
-            </div>
-            <select onchange="changeTheme(this.value)"><option value="default">🌐 СТАНДАРТ</option><option value="stalker">📟 ПНВ "ЗЕБРА"</option><option value="boykisser">✿ BOYKISSER :3</option><option value="bw">☢ МОНОХРОМ</option></select>
-            <button onclick="resetData()" class="btn-send" style="background:#500; color:#fff; margin-top:20px;">СБРОС ПРОФИЛЯ</button>
-        </div>
+<!-- ПРОФИЛЬ -->
+<div id="profile" class="page">
+    <h2>[ ID_DATA ]</h2>
+    <label>ВАШ НИК:</label>
+    <input type="text" id="nick-input" onchange="updateNick()">
+    <div class="item-box">
+        <p>RANK: <span id="rank-name">HACKER</span> [LVL <span id="user-lvl">1</span>]</p>
+        <div class="xp-bar"><div id="xp-fill"></div></div>
+        <p>XP: <span id="user-xp-val">0</span> / 100</p>
     </div>
 </div>
 
+<!-- НАСТРОЙКИ -->
+<div id="settings" class="page">
+    <h2>[ CONFIG ]</h2>
+    <select id="theme-sel" onchange="setTheme(this.value)">
+        <option value="classic">Classic Green</option>
+        <option value="old">Old (Black/Yellow)</option>
+        <option value="boykisser">Boykisser:3 (Pink)</option>
+        <option value="pnv">ПНВ (Night Vision)</option>
+    </select>
+</div>
+
 <script>
-    const gun = Gun(['https://herokuapp.com', 'https://peer.ooo']);
-    const db = gun.get('orsk_digger_p2p_v7');
-
-    let user = { 
-        nick: localStorage.getItem('d_nick') || "Аноним", 
-        xp: parseInt(localStorage.getItem('d_xp') || "0") 
-    };
-    let currentBranch = 'flood';
-
-    window.onload = () => {
-        const savedNick = localStorage.getItem('d_nick');
-        if (!savedNick) {
-            let n = prompt("ТВОЙ ПОЗЫВНОЙ:");
-            if (n) { localStorage.setItem('d_nick', n.trim()); user.nick = n.trim(); }
-        }
-        updateXP(); // Мгновенное обновление из localStorage
-        initSync(); // Медленное подключение к Gun
-        changeTheme(localStorage.getItem('s_theme') || 'default');
+    let gun, db;
+    let state = {
+        nick: localStorage.getItem('d_nick') || 'User' + Math.floor(Math.random()*999),
+        xp: parseInt(localStorage.getItem('d_xp')) || 0,
+        theme: localStorage.getItem('d_theme') || 'classic'
     };
 
-    function updateXP() {
-        localStorage.setItem('d_xp', user.xp);
+    window.onload = function() {
+        gun = Gun();
+        db = gun.get('digger_network_v5');
         
-        // Обновляем шапку и профиль
-        document.getElementById('status-bar').innerText = `${user.nick.toUpperCase()} | ${user.xp} XP`;
-        document.getElementById('prof-nick').innerText = user.nick;
+        document.getElementById('nick-input').value = state.nick;
+        document.getElementById('theme-sel').value = state.theme;
+        setTheme(state.theme);
+        updateUI();
 
-        // Логика уровней (по 50 XP на ранг)
-        const ranks = ["Новичок", "Крыса", "Лазальщик", "Диггер", "Крутэлык", "Легенда"];
-        const level = Math.floor(user.xp / 50);
-        const xpInLevel = user.xp % 50;
-        const currentRank = ranks[Math.min(level, ranks.length - 1)];
+        // Слушаем Объекты
+        db.get('objects').map().on((data, id) => {
+            if(!data || document.getElementById('obj'+id)) return;
+            const el = document.createElement('div');
+            el.id = 'obj'+id;
+            el.className = 'item-box';
+            el.innerHTML = `<strong>${data.title}</strong> <small>(${data.coords})</small><br><p>${data.desc}</p><small>Auth: ${data.author}</small>`;
+            document.getElementById('archive-list').prepend(el);
+        });
 
-        document.getElementById('prof-rank').innerText = "РАНГ: " + currentRank.toUpperCase();
-        document.getElementById('prof-xp-fill').style.width = (xpInLevel / 50 * 100) + "%";
+        // Слушаем Чат
+        db.get('chat').map().on((data, id) => {
+            if(!data || document.getElementById('msg'+id)) return;
+            const el = document.createElement('div');
+            el.id = 'msg'+id;
+            el.className = 'msg-box';
+            el.innerHTML = `[${new Date(data.time).toLocaleTimeString()}] <b>${data.author}:</b> ${data.text}`;
+            document.getElementById('forum-list').prepend(el);
+        });
+    };
+
+    window.route = (p) => {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.getElementById(p).classList.add('active');
+    };
+
+    window.setTheme = (t) => {
+        state.theme = t;
+        document.body.className = t === 'classic' ? '' : t;
+        localStorage.setItem('d_theme', t);
+    };
+
+    window.updateNick = () => {
+        state.nick = document.getElementById('nick-input').value;
+        localStorage.setItem('d_nick', state.nick);
+    };
+
+    function updateUI() {
+        const lvl = Math.floor(state.xp / 100) + 1;
+        const prog = state.xp % 100;
+        document.getElementById('user-lvl').innerText = lvl;
+        document.getElementById('user-xp-val').innerText = prog;
+        document.getElementById('xp-fill').style.width = prog + '%';
+        localStorage.setItem('d_xp', state.xp);
+    }
+
+    // Логика Архива
+    window.addArchive = () => {
+        const title = document.getElementById('obj-title').value;
+        const desc = document.getElementById('obj-desc').value;
+        const coords = document.getElementById('obj-coords').value || "ЗАСЕКРЕЧЕНО";
+        if(!title || !desc) return alert("Введите данные объекта!");
         
-        if (level < ranks.length - 1) {
-            document.getElementById('xp-needed').innerText = `${xpInLevel} / 50 XP до ранга ${ranks[level+1]}`;
-        } else {
-            document.getElementById('xp-needed').innerText = `МАКСИМАЛЬНЫЙ РАНГ ДОСТИГНУТ`;
-        }
-    }
+        db.get('objects').set({ title, desc, coords, author: state.nick });
+        state.xp += 50;
+        updateUI();
+        document.getElementById('obj-title').value = '';
+        document.getElementById('obj-desc').value = '';
+    };
 
-    function initSync() {
-        // Загрузка Отчетов
-        db.get('reports').map().on((data, id) => {
-            if (!data || document.getElementById('rep-'+id)) return;
-            const div = document.createElement('div');
-            div.id = 'rep-'+id; div.className = 'card';
-            div.innerHTML = `<b>${data.nick}</b> <small>${data.date}</small><h3>${data.t}</h3><p>${data.b}</p>`;
-            document.getElementById('feed').prepend(div);
-        });
-
-        // Загрузка Карты
-        db.get('markers').map().on((data, id) => {
-            if (!data || document.getElementById('m-'+id)) return;
-            const m = document.createElement('div');
-            m.id = 'm-'+id; m.className = 'marker';
-            m.style = `left:${data.x}%; top:${data.y}%; background:var(--y);`;
-            m.onclick = () => alert(data.n);
-            document.getElementById('markers-layer').appendChild(m);
-        });
-
-        // Вики
-        db.get('wiki').map().on((data, id) => {
-            if (!data || document.getElementById('w-'+id)) return;
-            const div = document.createElement('div');
-            div.id = 'w-'+id; div.className = 'card';
-            div.innerHTML = `<h3>${data.t}</h3><p>${data.d}</p>`;
-            document.getElementById('wiki-list').prepend(div);
-        });
-
-        switchForum('flood');
-    }
-
-    function switchForum(branch) {
-        currentBranch = branch;
-        document.getElementById('f-btn-flood').classList.toggle('active', branch === 'flood');
-        document.getElementById('f-btn-talk').classList.toggle('active', branch === 'talk');
-        document.getElementById('forum-feed').innerHTML = '';
+    // Логика Форума
+    window.sendChat = () => {
+        const text = document.getElementById('forum-msg').value;
+        if(!text) return;
         
-        db.get('chat_' + branch).map().on((data, id) => {
-            if (!data || document.getElementById('msg-'+id) || currentBranch !== branch) return;
-            const div = document.createElement('div');
-            div.id = 'msg-'+id; div.style = "border-bottom:1px solid #444; padding:10px;";
-            div.innerHTML = `<b>${data.nick}</b>: ${data.m}`;
-            document.getElementById('forum-feed').prepend(div);
-        });
-    }
-
-    function sendForum() {
-        const m = document.getElementById('forum-m').value;
-        if(!m) return;
-        db.get('chat_' + currentBranch).set({ nick: user.nick, m: m });
-        user.xp += 2; updateXP();
-        document.getElementById('forum-m').value = '';
-    }
-
-    function sendWiki() {
-        const t = document.getElementById('wiki-t').value, d = document.getElementById('wiki-d').value;
-        if(!t || !d) return;
-        db.get('wiki').set({ nick: user.nick, t, d });
-        user.xp += 20; updateXP();
-        document.getElementById('wiki-t').value = ''; document.getElementById('wiki-d').value = '';
-    }
-
-    function sendPost() {
-        const t = document.getElementById('post-t').value, b = document.getElementById('post-b').value;
-        if(!t || !b) return;
-        db.get('reports').set({ nick: user.nick, t, b, date: new Date().toLocaleDateString() });
-        user.xp += 15; updateXP();
-        document.getElementById('post-t').value = ''; document.getElementById('post-b').value = '';
-    }
-
-    function addMarker(e) {
-        const rect = e.target.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
-        const n = prompt("НАЗВАНИЕ:");
-        if(n) db.get('markers').set({ x, y, n, nick: user.nick });
-    }
-
-    function switchTab(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
-
-    function changeMap(src) { document.getElementById('map-img').src = src; }
-    function changeTheme(v) { document.documentElement.setAttribute('data-theme', v); localStorage.setItem('s_theme', v); }
-    function resetData() { localStorage.clear(); location.reload(); }
-    function playMeow() { new Audio('https://myinstants.com').play().catch(()=>{}); }
+        db.get('chat').set({ text, author: state.nick, time: Date.now() });
+        state.xp += 10;
+        updateUI();
+        document.getElementById('forum-msg').value = '';
+    };
 </script>
 </body>
 </html>
