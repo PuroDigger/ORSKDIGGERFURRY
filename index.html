@@ -2,48 +2,44 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DIGGER NET | GLOBAL TERMINAL v11</title>
-    <!-- Подключаем твой локальный файл -->
+    <title>DIGGER NET | CORE v12</title>
     <script src="gun.js"></script>
     <style>
         :root { --bg: #000; --text: #0f0; --accent: #0f0; }
-        
-        /* Темы оформления */
         body.old { --bg: #000; --text: #ffcc00; --accent: #ffcc00; }
         body.boykisser { --bg: #fff; --text: #ff69b4; --accent: #ffb6c1; }
         body.pnv { --bg: #000d00; --text: #00ff00; --accent: #004400; }
 
-        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; transition: 0.3s; }
-        
-        .nav { border: 1px solid var(--accent); padding: 10px; margin-bottom: 20px; display: flex; gap: 15px; overflow-x: auto; }
-        .nav a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; transition: 0.3s; overflow-x: hidden; }
+        .nav { border: 1px solid var(--accent); padding: 10px; margin-bottom: 20px; display: flex; gap: 15px; overflow-x: auto; white-space: nowrap; }
+        .nav a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: bold; text-transform: uppercase; }
         .nav a:hover { background: var(--accent); color: var(--bg); }
         
-        .page { display: none; max-width: 800px; margin: 0 auto; }
+        .page { display: none; max-width: 850px; margin: 0 auto; }
         .active { display: block; }
 
         input, textarea, select { 
             background: rgba(0,0,0,0.5); border: 1px solid var(--accent); 
-            color: var(--text); padding: 10px; width: 100%; margin-bottom: 10px; box-sizing: border-box; outline: none;
+            color: var(--text); padding: 10px; width: 100%; margin-bottom: 10px; box-sizing: border-box; outline: none; font-family: inherit;
         }
         button { 
             background: var(--accent); color: var(--bg); border: none; 
             padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase;
         }
-        
-        .box { border: 1px solid var(--accent); padding: 15px; margin-top: 15px; background: rgba(255,255,255,0.02); }
-        .msg-item { border-left: 2px solid var(--accent); padding-left: 10px; margin-bottom: 10px; animation: fade 0.3s; }
-        
-        .xp-bar { width: 100%; height: 12px; border: 1px solid var(--accent); margin-top: 10px; }
-        #xp-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.5s; }
 
-        @keyframes fade { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        #net-status { font-size: 0.7em; text-align: right; margin-bottom: 5px; opacity: 0.5; }
+        .box { border: 1px solid var(--accent); padding: 15px; margin-top: 15px; background: rgba(128,128,128,0.05); }
+        .msg-item { border-left: 2px solid var(--accent); padding: 5px 10px; margin-bottom: 8px; animation: slide 0.2s ease-out; }
+        
+        .xp-bar { width: 100%; height: 12px; border: 1px solid var(--accent); margin-top: 10px; position: relative; }
+        #xp-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+
+        #net-info { font-size: 0.7em; text-align: right; margin-bottom: 10px; font-weight: bold; }
+        @keyframes slide { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body class="classic">
 
-<div id="net-status">NETWORK: ИНИЦИАЛИЗАЦИЯ...</div>
+<div id="net-info">STATUS: <span id="net-status" style="color: red;">OFFLINE (INITIALIZING)</span></div>
 
 <div class="nav">
     <a onclick="route('archive')">/Архив</a>
@@ -54,51 +50,52 @@
 
 <!-- АРХИВ -->
 <div id="archive" class="page active">
-    <h2>[ РЕГИСТРАЦИЯ ОБЪЕКТА ]</h2>
+    <h2>[ ГЛОБАЛЬНЫЙ_РЕЕСТР ]</h2>
     <div class="box">
         <input type="text" id="obj-title" placeholder="Название объекта">
-        <input type="text" id="obj-coords" placeholder="Координаты">
-        <textarea id="obj-desc" rows="3" placeholder="Описание..."></textarea>
-        <button onclick="saveObject()">ВНЕСТИ В ГЛОБАЛЬНЫЙ РЕЕСТР (+50 XP)</button>
+        <input type="text" id="obj-coords" placeholder="Координаты (если есть)">
+        <textarea id="obj-desc" rows="3" placeholder="Описание, входы, охрана..."></textarea>
+        <button onclick="saveObject()">ВНЕСТИ В БАЗУ ДАННЫХ (+50 XP)</button>
     </div>
     <div id="archive-list"></div>
 </div>
 
 <!-- ФОРУМ -->
 <div id="forum" class="page">
-    <h2>[ ОБЩИЙ КАНАЛ СВЯЗИ ]</h2>
-    <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid var(--accent); padding: 15px; margin-bottom: 10px;"></div>
+    <h2>[ СИСТЕМА_СВЯЗИ ]</h2>
+    <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid var(--accent); padding: 15px; margin-bottom: 10px; background: rgba(0,0,0,0.1);"></div>
     <div style="display: flex; gap: 5px;">
         <input type="text" id="chat-msg" placeholder="Введите сообщение..." onkeypress="if(event.key==='Enter') sendChat()">
-        <button style="width: auto;" onclick="sendChat()">SEND</button>
+        <button onclick="sendChat()" style="width: 100px;">SEND</button>
     </div>
 </div>
 
 <!-- ПРОФИЛЬ -->
 <div id="profile" class="page">
-    <h2>[ ИДЕНТИФИКАЦИЯ ]</h2>
+    <h2>[ КАРТОЧКА_ДИГГЕРА ]</h2>
     <label>ПОЗЫВНОЙ:</label>
-    <input type="text" id="nick-input" onchange="saveNick()" placeholder="Введите ник">
+    <input type="text" id="nick-input" onchange="saveNick()" maxlength="15">
     <div class="box">
-        <p>СТАТУС: <span id="rank">НОВИЧОК</span></p>
-        <p>УРОВЕНЬ: <span id="lvl">1</span> | ОПЫТ: <span id="xp-num">0</span> / 100 XP</p>
+        <p>РАНГ: <span id="rank-val">НОВИЧОК</span></p>
+        <p>УРОВЕНЬ: <span id="lvl-val">1</span> | ОПЫТ: <span id="xp-val">0</span> / 100 XP</p>
         <div class="xp-bar"><div id="xp-fill"></div></div>
     </div>
+    <button onclick="localStorage.clear(); location.reload();" style="margin-top: 30px; background: #500; color: #fff;">WIPE LOCAL DATA</button>
 </div>
 
 <!-- НАСТРОЙКИ -->
 <div id="settings" class="page">
-    <h2>[ ПАРАМЕТРЫ ]</h2>
+    <h2>[ КОНФИГУРАЦИЯ ]</h2>
     <select id="theme-select" onchange="setTheme(this.value)">
         <option value="classic">Classic Green</option>
-        <option value="old">Old School (Yellow)</option>
+        <option value="old">Old Terminal (Yellow)</option>
         <option value="boykisser">Boykisser:3 (Pink)</option>
         <option value="pnv">Режим ПНВ</option>
     </select>
 </div>
 
 <script>
-    // --- 1. ГЛОБАЛЬНЫЕ ФУНКЦИИ (ДЛЯ ОШИБОК ROUTE) ---
+    // --- ГЛОБАЛЬНЫЕ ФУНКЦИИ ИНТЕРФЕЙСА ---
     window.route = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -111,22 +108,28 @@
     };
 
     window.saveNick = () => {
-        state.nick = document.getElementById('nick-input').value || 'Anon';
+        state.nick = document.getElementById('nick-input').value || 'Digger';
         localStorage.setItem('d_nick', state.nick);
     };
 
-    // --- 2. ИНИЦИАЛИЗАЦИЯ БАЗЫ ---
-    // Используем максимально широкий список пиров для GitHub Pages
-    const gun = Gun([
+    // --- БАЗА ДАННЫХ И СИНХРОНИЗАЦИЯ ---
+    const peers = [
         'https://herokuapp.com',
         'https://wall.org',
         'https://herokuapp.com',
         'https://herokuapp.com',
         'https://herokuapp.com'
-    ]);
+    ];
+
+    let gun, db;
     
-    // Единый ключ для всех пользователей
-    const db = gun.get('digger_global_network_v11');
+    // Пытаемся инициализировать Gun
+    try {
+        gun = Gun({ peers: peers, localStorage: true });
+        db = gun.get('digger_net_global_v12'); // Ключ версии
+    } catch(e) {
+        console.error("Gun Init Error:", e);
+    }
 
     let state = {
         nick: localStorage.getItem('d_nick') || 'Digger' + Math.floor(Math.random()*999),
@@ -135,7 +138,13 @@
     };
 
     // Мониторинг сети
-    gun.on('hi', peer => document.getElementById('net-status').innerText = 'NETWORK: ONLINE (' + peer.url.split('/')[2] + ')');
+    if(gun) {
+        gun.on('hi', peer => {
+            const status = document.getElementById('net-status');
+            status.innerText = 'ONLINE';
+            status.style.color = 'var(--accent)';
+        });
+    }
 
     window.onload = () => {
         document.getElementById('nick-input').value = state.nick;
@@ -143,49 +152,54 @@
         setTheme(state.theme);
         updateUI();
 
-        // СИНХРОНИЗАЦИЯ ЧАТА
-        db.get('chat').map().on((data, id) => {
-            if(!data || !data.text || document.getElementById('msg-'+id)) return;
-            const div = document.createElement('div');
-            div.id = 'msg-'+id;
-            div.className = 'msg-item';
-            div.innerHTML = `<small style="opacity:0.5">${new Date(data.time).toLocaleTimeString()}</small> <b>${data.author}:</b> ${data.text}`;
-            const box = document.getElementById('chat-box');
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        });
+        if (db) {
+            // Чат
+            db.get('chat').map().on((data, id) => {
+                if(!data || !data.text || document.getElementById('msg-'+id)) return;
+                const div = document.createElement('div');
+                div.id = 'msg-'+id;
+                div.className = 'msg-item';
+                div.innerHTML = `<small style="opacity:0.5">[${new Date(data.time).toLocaleTimeString()}]</small> <b>${data.author}:</b> ${data.text}`;
+                const box = document.getElementById('chat-box');
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            });
 
-        // СИНХРОНИЗАЦИЯ АРХИВА
-        db.get('objects').map().on((data, id) => {
-            if(!data || !data.title || document.getElementById('obj-'+id)) return;
-            const div = document.createElement('div');
-            div.id = 'obj-'+id;
-            div.className = 'box';
-            div.innerHTML = `<strong>${data.title}</strong> <span style="color:var(--accent)">[${data.coords}]</span><p>${data.desc}</p><small>ID: ${data.author}</small>`;
-            document.getElementById('archive-list').prepend(div);
-        });
+            // Архив
+            db.get('objects').map().on((data, id) => {
+                if(!data || !data.title || document.getElementById('obj-'+id)) return;
+                const div = document.createElement('div');
+                div.id = 'obj-'+id;
+                div.className = 'box';
+                div.innerHTML = `<strong>${data.title}</strong> <span style="color:var(--accent)">[${data.coords}]</span><p>${data.desc}</p><small>SOURCE: ${data.author}</small>`;
+                document.getElementById('archive-list').prepend(div);
+            });
+        }
     };
 
-    // --- 3. ЛОГИКА ОПЫТА И ОТПРАВКИ ---
+    // --- ЛОГИКА ОПЫТА И ОТПРАВКИ ---
     function updateUI() {
         const lvl = Math.floor(state.xp / 100) + 1;
         const prog = state.xp % 100;
         const ranks = ["КРЫСА", "НОВИЧОК", "СТАЛКЕР", "ПРОВОДНИК", "ЛЕГЕНДА"];
-        document.getElementById('lvl').innerText = lvl;
-        document.getElementById('xp-num').innerText = prog;
+        
+        document.getElementById('lvl-val').innerText = lvl;
+        document.getElementById('xp-val').innerText = prog;
         document.getElementById('xp-fill').style.width = prog + '%';
-        document.getElementById('rank').innerText = ranks[Math.min(lvl-1, 4)];
+        document.getElementById('rank-val').innerText = ranks[Math.min(lvl-1, 4)];
         localStorage.setItem('d_xp', state.xp);
     }
 
     window.sendChat = () => {
         const input = document.getElementById('chat-msg');
-        if(!input.value.trim()) return;
+        if(!input.value.trim() || !db) return;
+        
         db.get('chat').set({
             author: state.nick,
             text: input.value,
             time: Date.now()
         });
+        
         input.value = '';
         state.xp += 10;
         updateUI();
@@ -195,8 +209,9 @@
         const title = document.getElementById('obj-title').value;
         const desc = document.getElementById('obj-desc').value;
         const coords = document.getElementById('obj-coords').value || "ЗАСЕКРЕЧЕНО";
-        if(!title || !desc) return alert("Заполни поля объекта!");
         
+        if(!title || !desc || !db) return alert("ОШИБКА: ЗАПОЛНИТЕ ДАННЫЕ");
+
         db.get('objects').set({
             title, desc, coords,
             author: state.nick,
