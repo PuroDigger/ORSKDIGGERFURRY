@@ -2,175 +2,201 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DIGGER NET | REPAIRED</title>
-    <!-- Пытаемся загрузить локально. Если не выйдет, выведем ошибку в консоль -->
+    <title>DIGGER NET | TERMINAL</title>
+    <!-- Подключаем твой локальный файл gun.js -->
     <script src="gun.js"></script>
     <style>
+        /* Базовые стили CMD */
         :root { --bg: #000; --text: #0f0; --accent: #0f0; }
+        
+        /* Темы оформления */
         body.old { --bg: #000; --text: #ffcc00; --accent: #ffcc00; }
         body.boykisser { --bg: #fff; --text: #ff69b4; --accent: #ffb6c1; }
         body.pnv { --bg: #000d00; --text: #00ff00; --accent: #004400; }
 
-        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; }
-        .nav { border: 1px solid var(--accent); padding: 10px; margin-bottom: 20px; display: flex; gap: 15px; }
-        .nav a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; transition: 0.3s; }
+        
+        .nav { border: 1px solid var(--accent); padding: 10px; margin-bottom: 20px; display: flex; gap: 15px; overflow-x: auto; }
+        .nav a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
         .nav a:hover { background: var(--accent); color: var(--bg); }
         
         .page { display: none; max-width: 800px; margin: 0 auto; }
         .active { display: block; }
-        input, textarea, select { background: #000; border: 1px solid var(--accent); color: var(--text); padding: 10px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-        button { background: var(--accent); color: var(--bg); border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%; }
+
+        input, textarea, select { 
+            background: rgba(0,0,0,0.5); border: 1px solid var(--accent); 
+            color: var(--text); padding: 10px; width: 100%; margin-bottom: 10px; box-sizing: border-box; outline: none;
+        }
+        button { 
+            background: var(--accent); color: var(--bg); border: none; 
+            padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase;
+        }
         
         .box { border: 1px solid var(--accent); padding: 15px; margin-top: 15px; background: rgba(255,255,255,0.02); }
-        .msg-item { border-left: 3px solid var(--accent); padding: 5px 10px; margin-bottom: 10px; }
-        .xp-bar { width: 100%; height: 12px; border: 1px solid var(--accent); margin-top: 5px; }
+        .msg-line { border-left: 2px solid var(--accent); padding-left: 10px; margin-bottom: 8px; }
+        
+        .xp-bar { width: 100%; height: 12px; border: 1px solid var(--accent); margin-top: 10px; }
         #xp-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.5s; }
-        #status-alert { background: red; color: #000; text-align: center; font-weight: bold; display: none; padding: 5px; }
+
+        #error-log { background: red; color: #000; padding: 5px; text-align: center; display: none; font-weight: bold; }
     </style>
 </head>
 <body class="classic">
 
-<div id="status-alert">ОШИБКА: gun.js НЕ ЗАГРУЖЕН. ПРОВЕРЬТЕ НАЛИЧИЕ ФАЙЛА В РЕПОЗИТОРИИ.</div>
+<div id="error-log">СИСТЕМНАЯ ОШИБКА: gun.js НЕ ОБНАРУЖЕН</div>
 
 <div class="nav">
-    <a onclick="route('archive')">/Архив</a>
-    <a onclick="route('forum')">/Форум</a>
-    <a onclick="route('profile')">/Профиль</a>
-    <a onclick="route('settings')">/Настройки</a>
+    <a onclick="route('archive')">./Архив_Объектов</a>
+    <a onclick="route('forum')">./Форум_Чат</a>
+    <a onclick="route('profile')">./Профиль</a>
+    <a onclick="route('settings')">./Настройки</a>
 </div>
 
+<!-- АРХИВ: Объекты с координатами -->
 <div id="archive" class="page active">
-    <h2>[ РЕЕСТР ОБЪЕКТОВ ]</h2>
+    <h2>[ ВНЕСТИ ОБЪЕКТ В РЕЕСТР ]</h2>
     <div class="box">
         <input type="text" id="obj-title" placeholder="Название объекта">
-        <input type="text" id="obj-coords" placeholder="Координаты">
-        <textarea id="obj-desc" placeholder="Описание..."></textarea>
-        <button onclick="addArchive()">ВНЕСТИ В АРХИВ (+50 XP)</button>
+        <input type="text" id="obj-coords" placeholder="Координаты (необязательно)">
+        <textarea id="obj-desc" rows="3" placeholder="Описание, состояние, входы..."></textarea>
+        <button onclick="saveObject()">ОТПРАВИТЬ ДАННЫЕ В СЕТЬ (+50 XP)</button>
     </div>
     <div id="archive-list"></div>
 </div>
 
+<!-- ФОРУМ: Только сообщения -->
 <div id="forum" class="page">
-    <h2>[ СВЯЗЬ ]</h2>
-    <div id="chat-box" style="height: 300px; overflow-y: auto; border: 1px solid var(--accent); padding: 10px; margin-bottom: 10px;"></div>
+    <h2>[ ПРЯМОЙ ЭФИР ]</h2>
+    <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid var(--accent); padding: 15px; margin-bottom: 10px;"></div>
     <div style="display: flex; gap: 5px;">
-        <input type="text" id="forum-msg" placeholder="Текст...">
-        <button onclick="sendChat()" style="width: auto;">SEND</button>
+        <input type="text" id="chat-msg" placeholder="Введите сообщение..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button style="width: auto;" onclick="sendChat()">SEND</button>
     </div>
 </div>
 
+<!-- ПРОФИЛЬ -->
 <div id="profile" class="page">
-    <h2>[ ПРОФИЛЬ ]</h2>
-    <input type="text" id="nick-input" onchange="saveNick()">
+    <h2>[ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ]</h2>
+    <label>ПОЗЫВНОЙ:</label>
+    <input type="text" id="nick-input" onchange="saveNick()" placeholder="Введите ник">
     <div class="box">
-        <p>LVL: <span id="lvl">1</span> | XP: <span id="xp-val">0</span> / 100</p>
+        <p>УРОВЕНЬ: <span id="lvl-num">1</span></p>
+        <p>ОПЫТ: <span id="xp-num">0</span> / 100 XP</p>
         <div class="xp-bar"><div id="xp-fill"></div></div>
     </div>
 </div>
 
+<!-- НАСТРОЙКИ -->
 <div id="settings" class="page">
-    <h2>[ НАСТРОЙКИ ]</h2>
-    <select id="theme-sel" onchange="setTheme(this.value)">
-        <option value="classic">Classic</option>
-        <option value="old">Old School</option>
-        <option value="boykisser">Boykisser:3</option>
-        <option value="pnv">ПНВ</option>
+    <h2>[ КОНФИГУРАЦИЯ ИНТЕРФЕЙСА ]</h2>
+    <select id="theme-select" onchange="setTheme(this.value)">
+        <option value="classic">Classic Green</option>
+        <option value="old">Old Terminal (Yellow)</option>
+        <option value="boykisser">Boykisser:3 (Pink/White)</option>
+        <option value="pnv">Режим ПНВ (Зеленый)</option>
     </select>
 </div>
 
 <script>
-    // --- ГЛОБАЛЬНЫЕ ФУНКЦИИ (доступны кнопкам всегда) ---
-    function route(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        const target = document.getElementById(id);
-        if (target) target.classList.add('active');
-    }
-
-    function setTheme(t) {
-        state.theme = t;
-        document.body.className = t === 'classic' ? '' : t;
-        localStorage.setItem('d_theme', t);
-    }
-
-    function saveNick() {
-        state.nick = document.getElementById('nick-input').value || 'Anonymous';
-        localStorage.setItem('d_nick', state.nick);
-    }
-
-    function updateUI() {
-        const lvl = Math.floor(state.xp / 100) + 1;
-        const prog = state.xp % 100;
-        document.getElementById('lvl').innerText = lvl;
-        document.getElementById('xp-val').innerText = prog;
-        document.getElementById('xp-fill').style.width = prog + '%';
-        localStorage.setItem('d_xp', state.xp);
-    }
-
-    // --- ЛОГИКА БАЗЫ ДАННЫХ ---
+    // --- ГЛОБАЛЬНАЯ ЛОГИКА ---
     let gun, db;
     let state = {
-        nick: localStorage.getItem('d_nick') || 'Digger' + Math.floor(Math.random()*99),
+        nick: localStorage.getItem('d_nick') || 'Digger' + Math.floor(Math.random()*999),
         xp: parseInt(localStorage.getItem('d_xp')) || 0,
         theme: localStorage.getItem('d_theme') || 'classic'
     };
 
-    window.onload = function() {
+    // Инициализация
+    window.onload = () => {
         if (typeof Gun === 'undefined') {
-            document.getElementById('status-alert').style.display = 'block';
+            document.getElementById('error-log').style.display = 'block';
             return;
         }
 
-        // Инициализация базы
-        gun = Gun(['https://herokuapp.com', 'https://herokuapp.com']);
-        db = gun.get('digger_network_v6_final');
+        // Подключаемся к Gun через публичные реле
+        gun = Gun(['https://herokuapp.com', 'https://wall.org']);
+        db = gun.get('digger_forum_final_v7');
 
-        // Первичная настройка интерфейса
         document.getElementById('nick-input').value = state.nick;
-        document.getElementById('theme-sel').value = state.theme;
+        document.getElementById('theme-select').value = state.theme;
         setTheme(state.theme);
         updateUI();
 
-        // Слушатели данных
+        // Слушаем Чат
         db.get('chat').map().on((data, id) => {
             if(!data || document.getElementById('msg-'+id)) return;
             const div = document.createElement('div');
             div.id = 'msg-'+id;
-            div.className = 'msg-item';
+            div.className = 'msg-line';
             div.innerHTML = `<b>${data.author}:</b> ${data.text}`;
             const box = document.getElementById('chat-box');
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
         });
 
+        // Слушаем Архив
         db.get('objects').map().on((data, id) => {
             if(!data || document.getElementById('obj-'+id)) return;
             const div = document.createElement('div');
             div.id = 'obj-'+id;
             div.className = 'box';
-            div.innerHTML = `<strong>${data.title}</strong> [${data.coords}]<br>${data.desc}`;
+            div.innerHTML = `<strong>${data.title}</strong> <span style="color:red">[${data.coords}]</span><p>${data.desc}</p><small>Источник: ${data.author}</small>`;
             document.getElementById('archive-list').prepend(div);
         });
     };
 
-    // Функции отправки данных
-    function sendChat() {
-        const input = document.getElementById('forum-msg');
-        if(!input.value.trim() || !db) return;
+    // Навигация
+    window.route = (id) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    };
+
+    // Темы
+    window.setTheme = (t) => {
+        state.theme = t;
+        document.body.className = t === 'classic' ? '' : t;
+        localStorage.setItem('d_theme', t);
+    };
+
+    // Профиль
+    window.saveNick = () => {
+        state.nick = document.getElementById('nick-input').value || 'Anon';
+        localStorage.setItem('d_nick', state.nick);
+    };
+
+    function updateUI() {
+        const lvl = Math.floor(state.xp / 100) + 1;
+        const prog = state.xp % 100;
+        document.getElementById('lvl-num').innerText = lvl;
+        document.getElementById('xp-num').innerText = prog;
+        document.getElementById('xp-fill').style.width = prog + '%';
+        localStorage.setItem('d_xp', state.xp);
+    }
+
+    // Отправка сообщений
+    window.sendChat = () => {
+        const input = document.getElementById('chat-msg');
+        if(!input.value.trim()) return;
         db.get('chat').set({ author: state.nick, text: input.value, time: Date.now() });
         input.value = '';
         state.xp += 10; updateUI();
-    }
+    };
 
-    function addArchive() {
+    // Сохранение объектов
+    window.saveObject = () => {
         const t = document.getElementById('obj-title').value;
+        const c = document.getElementById('obj-coords').value || "ЗАСЕКРЕЧЕНО";
         const d = document.getElementById('obj-desc').value;
-        const c = document.getElementById('obj-coords').value || "NONE";
-        if(!t || !d || !db) return alert("Заполни поля!");
+        if(!t || !d) return alert("Введите название и описание!");
+        
         db.get('objects').set({ title: t, desc: d, coords: c, author: state.nick });
         state.xp += 50; updateUI();
+        
         document.getElementById('obj-title').value = '';
+        document.getElementById('obj-coords').value = '';
         document.getElementById('obj-desc').value = '';
-    }
+    };
 </script>
+
 </body>
 </html>
