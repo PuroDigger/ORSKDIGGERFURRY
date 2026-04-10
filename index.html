@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DIGGER NET | STABLE v14</title>
+    <title>DIGGER NET | STABLE v15</title>
+    <!-- Подключаем твой локальный gun.js -->
     <script src="gun.js"></script>
     <style>
         :root { --bg: #000; --text: #0f0; --accent: #0f0; }
@@ -38,7 +39,7 @@
 </head>
 <body class="classic">
 
-<div id="net-info">NETWORK: <span id="net-status" style="color: yellow;">CONNECTING...</span></div>
+<div id="net-info">NETWORK: <span id="net-status" style="color: yellow;">SEARCHING PEERS...</span></div>
 
 <div class="nav">
     <a onclick="route('archive')">/Архив</a>
@@ -50,16 +51,16 @@
 <div id="archive" class="page active">
     <h2>[ РЕЕСТР ОБЪЕКТОВ ]</h2>
     <div class="box">
-        <input type="text" id="obj-title" placeholder="Название">
+        <input type="text" id="obj-title" placeholder="Название объекта">
         <input type="text" id="obj-coords" placeholder="Координаты">
         <textarea id="obj-desc" rows="3" placeholder="Описание..."></textarea>
-        <button onclick="saveObject()">СОХРАНИТЬ (+50 XP)</button>
+        <button onclick="saveObject()">СОХРАНИТЬ В СЕТЬ (+50 XP)</button>
     </div>
     <div id="archive-list"></div>
 </div>
 
 <div id="forum" class="page">
-    <h2>[ КАНАЛ СВЯЗИ ]</h2>
+    <h2>[ ЧАТ ]</h2>
     <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid var(--accent); padding: 15px; margin-bottom: 10px;"></div>
     <div style="display: flex; gap: 5px;">
         <input type="text" id="chat-msg" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendChat()">
@@ -68,16 +69,16 @@
 </div>
 
 <div id="profile" class="page">
-    <h2>[ ДОСЬЕ ]</h2>
+    <h2>[ ПРОФИЛЬ ]</h2>
     <input type="text" id="nick-input" onchange="saveNick()" maxlength="15">
     <div class="box">
-        <p>УРОВЕНЬ: <span id="lvl-val">1</span> | ОПЫТ: <span id="xp-val">0</span> / 100</p>
+        <p>LVL: <span id="lvl-val">1</span> | XP: <span id="xp-val">0</span> / 100</p>
         <div class="xp-bar"><div id="xp-fill"></div></div>
     </div>
 </div>
 
 <div id="settings" class="page">
-    <h2>[ ТЕМЫ ]</h2>
+    <h2>[ ТЕМА ]</h2>
     <select id="theme-select" onchange="setTheme(this.value)">
         <option value="classic">Classic Green</option>
         <option value="old">Old Terminal</option>
@@ -87,9 +88,10 @@
 </div>
 
 <script>
-    // --- НАСТРОЙКИ СЕТИ ---
-    // Используем только полные рабочие адреса
+    // --- ИСПРАВЛЕННЫЙ СПИСОК СЕРВЕРОВ ---
+    // Убраны невалидные адреса, добавлены рабочие реле
     const peers = [
+        'https://herokuapp.com',
         'https://herokuapp.com',
         'https://herokuapp.com',
         'https://wall.org'
@@ -97,15 +99,21 @@
 
     let gun, db;
     
-    // Инициализация
+    // Инициализация базы
     if (typeof Gun !== 'undefined') {
-        gun = Gun({ peers: peers, localStorage: true });
-        db = gun.get('digger_network_stable_v14'); // Единый ключ версии
+        gun = Gun({ 
+            peers: peers, 
+            localStorage: true,
+            retry: Infinity // Пытаться подключиться бесконечно
+        });
         
-        // Отслеживание реального подключения
+        db = gun.get('digger_stable_network_v15'); 
+        
+        // Мониторинг успешного коннекта
         gun.on('hi', peer => {
             document.getElementById('net-status').innerText = 'ONLINE';
             document.getElementById('net-status').style.color = 'var(--accent)';
+            console.log('Успешное подключение:', peer.url);
         });
     }
 
@@ -115,7 +123,6 @@
         theme: localStorage.getItem('d_theme') || 'classic'
     };
 
-    // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
     window.route = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -151,8 +158,9 @@
                 const div = document.createElement('div');
                 div.id = 'msg-'+id; div.className = 'msg-item';
                 div.innerHTML = `<b>${data.author}:</b> ${data.text}`;
-                document.getElementById('chat-box').appendChild(div);
-                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+                const box = document.getElementById('chat-box');
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
             });
 
             db.get('objects').map().on((data, id) => {
@@ -177,7 +185,7 @@
         const t = document.getElementById('obj-title').value;
         const d = document.getElementById('obj-desc').value;
         const c = document.getElementById('obj-coords').value || "NONE";
-        if(!t || !d || !db) return alert("Заполни данные!");
+        if(!t || !d || !db) return alert("Заполни поля!");
         db.get('objects').set({ title: t, desc: d, coords: c, author: state.nick, time: Date.now() });
         state.xp += 50; updateUI();
         document.getElementById('obj-title').value = '';
