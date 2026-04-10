@@ -2,16 +2,19 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DIGGER NET | STABLE v15</title>
+    <title>DIGGER NET | CORE v16</title>
     <!-- Подключаем твой локальный gun.js -->
     <script src="gun.js"></script>
     <style>
         :root { --bg: #000; --text: #0f0; --accent: #0f0; }
+        
+        /* Темы оформления */
         body.old { --bg: #000; --text: #ffcc00; --accent: #ffcc00; }
         body.boykisser { --bg: #fff; --text: #ff69b4; --accent: #ffb6c1; }
         body.pnv { --bg: #000d00; --text: #00ff00; --accent: #004400; }
 
-        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; transition: 0.3s; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; margin: 0; transition: 0.3s; overflow-x: hidden; }
+        
         .nav { border: 1px solid var(--accent); padding: 10px; margin-bottom: 20px; display: flex; gap: 15px; overflow-x: auto; }
         .nav a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
         .nav a:hover { background: var(--accent); color: var(--bg); }
@@ -39,7 +42,7 @@
 </head>
 <body class="classic">
 
-<div id="net-info">NETWORK: <span id="net-status" style="color: yellow;">SEARCHING PEERS...</span></div>
+<div id="net-info">NETWORK: <span id="net-status" style="color: red;">OFFLINE</span></div>
 
 <div class="nav">
     <a onclick="route('archive')">/Архив</a>
@@ -48,6 +51,7 @@
     <a onclick="route('settings')">/Настройки</a>
 </div>
 
+<!-- АРХИВ -->
 <div id="archive" class="page active">
     <h2>[ РЕЕСТР ОБЪЕКТОВ ]</h2>
     <div class="box">
@@ -59,26 +63,29 @@
     <div id="archive-list"></div>
 </div>
 
+<!-- ФОРУМ -->
 <div id="forum" class="page">
-    <h2>[ ЧАТ ]</h2>
-    <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid var(--accent); padding: 15px; margin-bottom: 10px;"></div>
+    <h2>[ ОБЩИЙ ЧАТ ]</h2>
+    <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid var(--accent); padding: 15px; margin-bottom: 10px; background: rgba(0,0,0,0.1);"></div>
     <div style="display: flex; gap: 5px;">
         <input type="text" id="chat-msg" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendChat()">
         <button onclick="sendChat()" style="width: 100px;">SEND</button>
     </div>
 </div>
 
+<!-- ПРОФИЛЬ -->
 <div id="profile" class="page">
-    <h2>[ ПРОФИЛЬ ]</h2>
+    <h2>[ ДОСЬЕ ]</h2>
     <input type="text" id="nick-input" onchange="saveNick()" maxlength="15">
     <div class="box">
-        <p>LVL: <span id="lvl-val">1</span> | XP: <span id="xp-val">0</span> / 100</p>
+        <p>УРОВЕНЬ: <span id="lvl-val">1</span> | ОПЫТ: <span id="xp-val">0</span> / 100 XP</p>
         <div class="xp-bar"><div id="xp-fill"></div></div>
     </div>
 </div>
 
+<!-- НАСТРОЙКИ -->
 <div id="settings" class="page">
-    <h2>[ ТЕМА ]</h2>
+    <h2>[ КОНФИГУРАЦИЯ ]</h2>
     <select id="theme-select" onchange="setTheme(this.value)">
         <option value="classic">Classic Green</option>
         <option value="old">Old Terminal</option>
@@ -88,35 +95,7 @@
 </div>
 
 <script>
-    // --- ИСПРАВЛЕННЫЙ СПИСОК СЕРВЕРОВ ---
-    // Убраны невалидные адреса, добавлены рабочие реле
-    const peers = [
-        'https://herokuapp.com',
-        'https://herokuapp.com',
-        'https://herokuapp.com',
-        'https://wall.org'
-    ];
-
-    let gun, db;
-    
-    // Инициализация базы
-    if (typeof Gun !== 'undefined') {
-        gun = Gun({ 
-            peers: peers, 
-            localStorage: true,
-            retry: Infinity // Пытаться подключиться бесконечно
-        });
-        
-        db = gun.get('digger_stable_network_v15'); 
-        
-        // Мониторинг успешного коннекта
-        gun.on('hi', peer => {
-            document.getElementById('net-status').innerText = 'ONLINE';
-            document.getElementById('net-status').style.color = 'var(--accent)';
-            console.log('Успешное подключение:', peer.url);
-        });
-    }
-
+    // --- 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ФУНКЦИИ (ДЛЯ КНОПОК) ---
     let state = {
         nick: localStorage.getItem('d_nick') || 'Digger' + Math.floor(Math.random()*999),
         xp: parseInt(localStorage.getItem('d_xp')) || 0,
@@ -146,6 +125,26 @@
         localStorage.setItem('d_xp', state.xp);
     }
 
+    // --- 2. ИНИЦИАЛИЗАЦИЯ БАЗЫ ---
+    const peers = [
+        'https://herokuapp.com',
+        'https://herokuapp.com',
+        'https://herokuapp.com',
+        'https://wall.org'
+    ];
+
+    let gun, db;
+    if (typeof Gun !== 'undefined') {
+        gun = Gun({ peers: peers, localStorage: true });
+        db = gun.get('digger_network_v16_final'); // Единый ключ для всех пользователей
+        
+        gun.on('hi', peer => {
+            const status = document.getElementById('net-status');
+            status.innerText = 'ONLINE';
+            status.style.color = 'var(--accent)';
+        });
+    }
+
     window.onload = () => {
         document.getElementById('nick-input').value = state.nick;
         document.getElementById('theme-select').value = state.theme;
@@ -153,26 +152,29 @@
         updateUI();
 
         if (db) {
+            // Загрузка Чата
             db.get('chat').map().on((data, id) => {
                 if(!data || !data.text || document.getElementById('msg-'+id)) return;
                 const div = document.createElement('div');
                 div.id = 'msg-'+id; div.className = 'msg-item';
-                div.innerHTML = `<b>${data.author}:</b> ${data.text}`;
+                div.innerHTML = `<small style="opacity:0.5">[${new Date(data.time).toLocaleTimeString()}]</small> <b>${data.author}:</b> ${data.text}`;
                 const box = document.getElementById('chat-box');
                 box.appendChild(div);
                 box.scrollTop = box.scrollHeight;
             });
 
+            // Загрузка Архива
             db.get('objects').map().on((data, id) => {
                 if(!data || !data.title || document.getElementById('obj-'+id)) return;
                 const div = document.createElement('div');
                 div.id = 'obj-'+id; div.className = 'box';
-                div.innerHTML = `<strong>${data.title}</strong> [${data.coords}]<p>${data.desc}</p><small>От: ${data.author}</small>`;
+                div.innerHTML = `<strong>${data.title}</strong> <span style="color:var(--accent)">[${data.coords}]</span><p>${data.desc}</p><small>ОТ: ${data.author}</small>`;
                 document.getElementById('archive-list').prepend(div);
             });
         }
     };
 
+    // --- 3. ОТПРАВКА ДАННЫХ ---
     window.sendChat = () => {
         const input = document.getElementById('chat-msg');
         if(!input.value.trim() || !db) return;
@@ -184,7 +186,7 @@
     window.saveObject = () => {
         const t = document.getElementById('obj-title').value;
         const d = document.getElementById('obj-desc').value;
-        const c = document.getElementById('obj-coords').value || "NONE";
+        const c = document.getElementById('obj-coords').value || "ЗАСЕКРЕЧЕНО";
         if(!t || !d || !db) return alert("Заполни поля!");
         db.get('objects').set({ title: t, desc: d, coords: c, author: state.nick, time: Date.now() });
         state.xp += 50; updateUI();
