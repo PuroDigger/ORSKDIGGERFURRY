@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Орск Подземный — Форум диггеров</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg: #1a1a1a;
+      --surface: #222222;
+      --surface2: #2a2a2a;
+      --border: #333;
+      --text: #d4d4d4;
+      --text2: #a0a0a0;
+      --accent: #e8920b;
+      --accent2: #c77d0a;
+      --green: #5a9e3a;
+      --red: #c0392b;
+      --blue: #3b7dd8;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+    
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--accent);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    
+    .logo span {
+      color: #fff;
+      font-weight: 400;
+    }
+    
+    nav {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    
+    nav button {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid transparent;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    nav button:hover {
+      color: #fff;
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+    
+    nav button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    
+    .profile-mini {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+    
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #1a1a1a;
+    }
+    
+    .lv-badge {
+      font-size: 0.7rem;
+      background: #333;
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    .section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .section.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    #map-container {
+      position: relative;
+      width: 100%;
+      height: 70vh;
+      min-height: 450px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 2px solid var(--border);
+      background: #111;
+      margin-bottom: 15px;
+    }
+    
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    .map-controls {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+      display: flex;
+      gap: 10px;
+      flex-direction: column;
+    }
+    
+    .map-controls button {
+      padding: 10px 15px;
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .map-controls button:hover {
+      background: var(--accent);
+      color: #1a1a1a;
+    }
+    
+    .map-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .map-overlay button {
+      padding: 12px 22px;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+    
+    .btn-add-marker {
+      background: var(--accent);
+      color: #1a1a1a;
+    }
+    
+    .map-instruction {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      pointer-events: none;
+    }
+    
+    .search-bar {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      padding: 8px 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .search-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 8px 0;
+      outline: none;
+    }
+    
+    .search-bar button {
+      background: var(--accent);
+      border: none;
+      border-radius: 20px;
+      padding: 6px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .section-header h2 {
+      font-size: 1.6rem;
+      color: #fff;
+      border-left: 4px solid var(--accent);
+      padding-left: 14px;
+    }
+    
+    .btn-create {
+      background: var(--accent);
+      color: #1a1a1a;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .post-card:hover {
+      border-color: #555;
+    }
+    
+    .post-card h3 {
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    
+    .post-meta {
+      font-size: 0.8rem;
+      color: var(--text2);
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .post-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    
+    .post-actions button {
+      background: transparent;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    
+    .post-actions button:hover {
+      background: var(--surface2);
+    }
+    
+    .slider-group {
+      margin: 10px 0;
+    }
+    
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+    }
+    
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .modal-overlay.show {
+      display: flex;
+    }
+    
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    
+    .modal h3 {
+      color: #fff;
+      margin-bottom: 18px;
+      border-left: 3px solid var(--accent);
+      padding-left: 12px;
+    }
+    
+    .modal label {
+      display: block;
+      font-weight: 600;
+      margin: 12px 0 4px;
+      color: #ccc;
+    }
+    
+    .modal input,
+    .modal textarea,
+    .modal select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: #fff;
+    }
+    
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: #1a1a1a;
+      border: none;
+      padding: 11px 24px;
+      border-radius: 25px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    
+    .btn-danger {
+      background: var(--red);
+      color: white;
+      border: none;
+      padding: 11px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 11px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+    }
+    
+    .btn-close-modal {
+      float: right;
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
+    .profile-page {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .profile-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .profile-avatar-lg {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 auto 15px;
+      color: #1a1a1a;
+    }
+    
+    .xp-bar-wrap {
+      background: #333;
+      border-radius: 20px;
+      height: 22px;
+      margin: 16px 0 8px;
+    }
+    
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #c77d0a, #f5a623);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    
+    .rank-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 8px 0;
+    }
+    
+    .stats-row {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text2);
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #2e7d32;
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 25px;
+      font-weight: 700;
+      z-index: 3000;
+      animation: slideUp 0.4s ease, fadeOut 0.5s ease 2.5s forwards;
+    }
+    
+    @keyframes slideUp {
+      from {
+        transform: translateY(60px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 50px;
+      color: #666;
+    }
+    
+    .comment-item {
+      background: var(--surface2);
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+    }
+    
+    .stars {
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="switchSection('map')">🔦 ОРСК<span>ПОДЗЕМНЫЙ</span></div>
+  <nav id="mainNav">
+    <button data-section="map" class="active">🗺 Карта</button>
+    <button data-section="stories">📖 Истории</button>
+    <button data-section="flood">💬 Флуд</button>
+    <button data-section="records">📝 Записи</button>
+    <button data-section="profile">👤 Профиль</button>
+    <button data-section="theme">🎨 Тема</button>
+    <button data-section="admin" id="adminBtnNav" style="display:none;">⚙️ Админ</button>
+  </nav>
+  <div class="profile-mini" onclick="switchSection('profile')">
+    <div class="avatar-circle" id="avatarCircle">?</div>
+    <span id="miniNick">Гость</span>
+    <span class="lv-badge" id="miniLv">LV 1</span>
+  </div>
+</header>
+
+<main>
+  <section class="section active" id="section-map">
+    <div id="map-container">
+      <div id="map"></div>
+      <div class="map-controls">
+        <button onclick="toggleMapLayer()" id="layerToggleBtn">🛰️ Спутник</button>
+      </div>
+      <div class="map-instruction" id="mapInstruction">👆 Кликните по карте, чтобы добавить точку</div>
+      <div class="map-overlay">
+        <button class="btn-add-marker" onclick="startAddMarker()">📍 Добавить точку</button>
+        <button onclick="toggleAllPopups()">📋 Все метки</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="mapSearchInput" placeholder="Поиск меток по названию..." onkeyup="searchMarkers()">
+      <button onclick="searchMarkers()">Найти</button>
+    </div>
+    <div id="mapSearchResults"></div>
+  </section>
+
+  <section class="section" id="section-stories">
+    <div class="section-header"><h2>📖 Истории с залазов</h2><button class="btn-create" onclick="openPostModal('stories')">➕ Новая история</button></div>
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="storiesSearch" placeholder="Поиск по историям..." onkeyup="searchPosts('stories')">
+    </div>
+    <div id="posts-stories"></div>
+  </section>
+
+  <section class="section" id="section-flood">
+    <div class="section-header"><h2>💬 Флуд</h2><button class="btn-create" onclick="openPostModal('flood')">➕ Новая тема</button></div>
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="floodSearch" placeholder="Поиск по флуду..." onkeyup="searchPosts('flood')">
+    </div>
+    <div id="posts-flood"></div>
+  </section>
+
+  <section class="section" id="section-records">
+    <div class="section-header"><h2>📝 Записи</h2><button class="btn-create" onclick="openPostModal('records')">➕ Новая запись</button></div>
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="recordsSearch" placeholder="Поиск по записям..." onkeyup="searchPosts('records')">
+    </div>
+    <div id="posts-records"></div>
+  </section>
+
+  <section class="section" id="section-profile">
+    <div class="profile-page">
+      <div class="profile-card">
+        <div class="profile-avatar-lg" id="profileAvatarLarge">?</div>
+        <h2 id="profileNickname">Гость</h2>
+        <div class="rank-name" id="profileRank">Канализационный окунь</div>
+        <div class="level-display" id="profileLevel" style="font-size:2rem;color:var(--accent);margin:6px 0;">Уровень 1</div>
+        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xpBarFill" style="width:0%;">0 / 500 XP</div></div>
+        <p id="xpToNext" style="color:#999;">До следующего уровня: 500 XP</p>
+        <div class="stats-row">
+          <div><div class="stat-value" id="statMarkers">0</div><div class="stat-label">Меток</div></div>
+          <div><div class="stat-value" id="statPosts">0</div><div class="stat-label">Постов</div></div>
+          <div><div class="stat-value" id="statComments">0</div><div class="stat-label">Комментариев</div></div>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;">
+          <input type="text" id="nicknameInput" placeholder="Введите ник..." maxlength="30" style="padding:10px;border-radius:20px;background:var(--surface2);color:#fff;border:1px solid var(--border);" />
+          <button class="btn-primary" onclick="saveNickname()">💾 Сохранить</button>
+        </div>
+        <p style="color:#666;font-size:0.7rem;margin-top:12px;">Опыт: +100 за метку, +50 за пост, +25 за комментарий</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="section-theme">
+    <div style="max-width:500px;margin:40px auto;text-align:center;">
+      <h2 style="color:#fff;">🎨 Выберите тему оформления</h2>
+      <div style="display:flex;flex-direction:column;gap:15px;margin-top:25px;">
+        <button class="btn-primary" style="background:#e8920b;color:#1a1a1a;" onclick="setTheme('default')">🖤 Обычная (жёлто-чёрная)</button>
+        <button class="btn-primary" style="background:#2e7d32;color:#fff;" onclick="setTheme('green')">🌿 ПНВ (зелёный)</button>
+        <button class="btn-primary" style="background:#e91e8a;color:#fff;" onclick="setTheme('pink')">💗 Бойкиссер (розовый)</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
+<div id="toastContainer"></div>
+
+<script>
+  // Firebase конфиг
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHxialxBDWHfz4mEdg_2eOoIxomnu_hQU",
+    authDomain: "orskdigg.firebaseapp.com",
+    databaseURL: "https://orskdigg-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "orskdigg",
+    storageBucket: "orskdigg.firebasestorage.app",
+    messagingSenderId: "223291146501",
+    appId: "1:223291146501:web:9894e29159d3de33b7376c"
+  };
+
+  // Инициализация Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // Глобальные переменные
+  let currentUser = null;
+  let mapInstance = null;
+  let allMarkers = {};
+  let currentSection = 'map';
+  let isAddingMarker = false;
+  let pendingMarkerCoords = null;
+  let allPostsData = { stories: [], flood: [], records: [] };
+  let currentLayer = 'satellite'; // satellite или street
+
+  const XP_PER_LEVEL = 500;
+  const XP_PER_MARKER = 100;
+  const XP_PER_POST = 50;
+  const XP_PER_COMMENT = 25;
+  const RANKS = ["Канализационный окунь", "Школьник", "Лазальщик", "Диггер", "Крутой диггер", "Крутэлык"];
+
+  // Вспомогательные функции
+  function getLevel(xp) {
+    return Math.floor(xp / XP_PER_LEVEL) + 1;
+  }
+  
+  function getRank(level) {
+    return RANKS[Math.min(level - 1, RANKS.length - 1)];
+  }
+  
+  function getXpInLevel(xp) {
+    return xp % XP_PER_LEVEL;
+  }
+  
+  function getXpToNext(xp) {
+    return XP_PER_LEVEL - getXpInLevel(xp);
+  }
+  
+  function formatDate(iso) {
+    if (!iso) return "только что";
+    try {
+      return new Date(iso).toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch(e) {
+      return "неизвестно";
+    }
+  }
+  
+  function escapeHTML(s) {
+    if (!s) return '';
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+  
+  function showToast(msg, isErr = false) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    if (isErr) t.style.background = '#c0392b';
+    t.textContent = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+  
+  function isAdmin() {
+    return currentUser && currentUser.nickname === 'Евгений Вентшахта';
+  }
+  
+  function canEdit(itemAuthor) {
+    // Теперь редактировать может кто угодно
+    return currentUser && true;
+  }
+
+  // Тема
+  function setTheme(name) {
+    const themes = {
+      default: { '--bg': '#1a1a1a', '--surface': '#222', '--surface2': '#2a2a2a', '--border': '#333', '--text': '#d4d4d4', '--text2': '#a0a0a0', '--accent': '#e8920b', '--accent2': '#c77d0a' },
+      green: { '--bg': '#0a1f0a', '--surface': '#0e2b0e', '--surface2': '#1a3a1a', '--border': '#2a4a2a', '--text': '#c5e0c5', '--text2': '#8aa88a', '--accent': '#33cc33', '--accent2': '#2d9e2d' },
+      pink: { '--bg': '#2a1a2a', '--surface': '#3a2a3a', '--surface2': '#4a3a4a', '--border': '#5a4a5a', '--text': '#f0d0f0', '--text2': '#c0a0c0', '--accent': '#ff66b2', '--accent2': '#e0559a' }
+    };
+    const root = document.documentElement;
+    const t = themes[name] || themes.default;
+    for (let [k, v] of Object.entries(t)) {
+      root.style.setProperty(k, v);
+    }
+    localStorage.setItem('orsk_theme', name);
+    showToast('Тема изменена');
+  }
+
+  // Аутентификация
+  function login(nickname) {
+    const usersRef = database.ref('users');
+    usersRef.orderByChild('nickname').equalTo(nickname).once('value', snapshot => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const userId = Object.keys(data)[0];
+        currentUser = { ...data[userId], id: userId };
+        onLoginSuccess();
+      } else {
+        const newUserRef = usersRef.push();
+        const newUser = {
+          nickname: nickname,
+          xp: 0,
+          joinDate: new Date().toISOString()
+        };
+        newUserRef.set(newUser).then(() => {
+          currentUser = { ...newUser, id: newUserRef.key };
+          onLoginSuccess();
+        });
+      }
+    });
+  }
+
+  function onLoginSuccess() {
+    localStorage.setItem('orsk_nickname', currentUser.nickname);
+    updateProfileUI();
+    loadMarkers();
+    loadAllPosts();
+    const admin = isAdmin();
+    document.getElementById('adminBtnNav').style.display = admin ? 'inline-block' : 'none';
+    showToast('Добро пожаловать, ' + currentUser.nickname + '!');
+  }
+
+  function saveNickname() {
+    const newNick = document.getElementById('nicknameInput').value.trim();
+    if (!newNick || newNick.length < 2) {
+      return showToast('Ник должен быть от 2 символов', true);
+    }
+    if (newNick === currentUser.nickname) return;
+
+    database.ref('users').orderByChild('nickname').equalTo(newNick).once('value', snapshot => {
+      if (snapshot.exists()) {
+        return showToast('❌ Ник уже занят!', true);
+      }
+      database.ref('/users/' + currentUser.id + '/nickname').set(newNick).then(() => {
+        currentUser.nickname = newNick;
+        updateProfileUI();
+        showToast('Ник изменён на ' + newNick);
+      });
+    });
+  }
+
+  function addXp(amount) {
+    if (!currentUser) return;
+    const newXp = (currentUser.xp || 0) + amount;
+    database.ref('/users/' + currentUser.id + '/xp').set(newXp);
+    currentUser.xp = newXp;
+    updateProfileUI();
+  }
+
+  function updateProfileUI() {
+    if (!currentUser) return;
+    const xp = currentUser.xp || 0;
+    const lvl = getLevel(xp);
+    const rank = getRank(lvl);
+    document.getElementById('avatarCircle').textContent = currentUser.nickname[0].toUpperCase();
+    document.getElementById('miniNick').textContent = currentUser.nickname;
+    document.getElementById('miniLv').textContent = 'LV ' + lvl;
+    document.getElementById('profileAvatarLarge').textContent = currentUser.nickname[0].toUpperCase();
+    document.getElementById('profileNickname').textContent = currentUser.nickname;
+    document.getElementById('profileRank').textContent = rank;
+    document.getElementById('profileLevel').textContent = 'Уровень ' + lvl;
+    const pct = Math.round((getXpInLevel(xp) / XP_PER_LEVEL) * 100);
+    document.getElementById('xpBarFill').style.width = Math.max(pct, 4) + '%';
+    document.getElementById('xpBarFill').innerHTML = getXpInLevel(xp) + ' / ' + XP_PER_LEVEL + ' XP';
+    document.getElementById('xpToNext').innerHTML = 'До следующего уровня: ' + getXpToNext(xp) + ' XP';
+    document.getElementById('nicknameInput').value = currentUser.nickname;
+  }
+
+  // Метки на карте
+  function loadMarkers() {
+    database.ref('markers').on('value', snapshot => {
+      const data = snapshot.val() || {};
+      for (let id in allMarkers) {
+        if (allMarkers[id]) mapInstance.removeLayer(allMarkers[id]);
+      }
+      allMarkers = {};
+      Object.entries(data).forEach(([id, marker]) => {
+        addMarkerToMap({ ...marker, id });
+      });
+    });
+  }
+
+  function addMarkerToMap(marker) {
+    if (!mapInstance) return;
+    const popupContent = buildMarkerPopup(marker);
+    const leafletMarker = L.marker([marker.lat, marker.lng]).addTo(mapInstance);
+    leafletMarker.bindPopup(popupContent, { maxWidth: 350, minWidth: 250 });
+    allMarkers[marker.id] = leafletMarker;
+  }
+
+  function buildMarkerPopup(m) {
+    let html = `<b style="font-size:1.1rem;">${escapeHTML(m.title)}</b><br>`;
+    if (m.description) html += `<small>${escapeHTML(m.description)}</small><br>`;
+    
+    // Показываем ползунки только если они больше 0
+    if ((m.habarnost && m.habarnost > 0) || (m.state && m.state > 0) || (m.security && m.security > 0)) {
+      html += `<div style="margin:8px 0; font-size:0.75rem;">`;
+      if (m.habarnost && m.habarnost > 0) html += `📦 Хабарность: <span class="stars">${'★'.repeat(m.habarnost)}${'☆'.repeat(10 - m.habarnost)}</span><br>`;
+      if (m.state && m.state > 0) html += `🏗️ Состояние: <span class="stars">${'★'.repeat(m.state)}${'☆'.repeat(10 - m.state)}</span><br>`;
+      if (m.security && m.security > 0) html += `🚨 Охрана: <span class="stars">${'★'.repeat(m.security)}${'☆'.repeat(10 - m.security)}</span><br>`;
+      html += `</div>`;
+    }
+    
+    if (m.imageUrl) html += `<img src="${escapeHTML(m.imageUrl)}" style="max-width:100%;max-height:150px;border-radius:6px;margin:5px 0;" onerror="this.style.display='none'"><br>`;
+    if (m.videoUrl) html += `<a href="${escapeHTML(m.videoUrl)}" target="_blank" style="color:var(--accent);">📹 Смотреть видео</a><br>`;
+    
+    html += `<small>👤 ${escapeHTML(m.author)} · +${m.xpEarned} XP · ${formatDate(m.date)}</small>`;
+    
+    // Кнопки редактирования для всех
+    html += `<div style="margin-top:8px; display:flex; gap:8px;">
+      <button onclick="editMarker('${m.id}')" style="background:var(--blue);color:white;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;">✏️ Редактировать</button>
+      <button onclick="deleteMarker('${m.id}')" style="background:var(--red);color:white;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;">🗑 Удалить</button>
+    </div>`;
+    
+    return html;
+  }
+
+  function editMarker(markerId) {
+    database.ref(`markers/${markerId}`).once('value', snapshot => {
+      const marker = snapshot.val();
+      if (!marker) return showToast('Метка не найдена', true);
+      
+      const modal = document.getElementById('modalOverlay');
+      document.getElementById('modalContent').innerHTML = `
+        <button class="btn-close-modal" onclick="closeModal()">✕</button>
+        <h3>✏️ Редактировать метку</h3>
+        <label>Название *</label>
+        <input id="editTitle" value="${escapeHTML(marker.title)}">
+        <label>Описание</label>
+        <textarea id="editDesc">${escapeHTML(marker.description || '')}</textarea>
+        <label>Фото URL</label>
+        <input id="editImage" value="${escapeHTML(marker.imageUrl || '')}">
+        <label>Видео URL</label>
+        <input id="editVideo" value="${escapeHTML(marker.videoUrl || '')}">
+        <div class="slider-group"><label>📦 Хабарность (0-10): <span id="habarnostVal">${marker.habarnost || 0}</span></label>
+        <input type="range" id="habarnost" min="0" max="10" value="${marker.habarnost || 0}" oninput="habarnostVal.innerText=this.value"></div>
+        <div class="slider-group"><label>🏗️ Состояние (0-10): <span id="stateVal">${marker.state || 0}</span></label>
+        <input type="range" id="state" min="0" max="10" value="${marker.state || 0}" oninput="stateVal.innerText=this.value"></div>
+        <div class="slider-group"><label>🚨 Охрана (0-10): <span id="securityVal">${marker.security || 0}</span></label>
+        <input type="range" id="security" min="0" max="10" value="${marker.security || 0}" oninput="securityVal.innerText=this.value"></div>
+        <div class="btn-row"><button class="btn-primary" onclick="saveMarkerEdit('${markerId}')">Сохранить</button><button class="btn-secondary" onclick="closeModal()">Отмена</button></div>
+      `;
+      modal.classList.add('show');
+    });
+  }
+
+  function saveMarkerEdit(markerId) {
+    const title = document.getElementById('editTitle').value.trim();
+    if (!title) return showToast('Введите название', true);
+    
+    const updates = {
+      title: title,
+      description: document.getElementById('editDesc').value.trim(),
+      imageUrl: document.getElementById('editImage').value.trim(),
+      videoUrl: document.getElementById('editVideo').value.trim(),
+      habarnost: parseInt(document.getElementById('habarnost').value) || 0,
+      state: parseInt(document.getElementById('state').value) || 0,
+      security: parseInt(document.getElementById('security').value) || 0
+    };
+    
+    database.ref(`markers/${markerId}`).update(updates).then(() => {
+      closeModal();
+      showToast('Метка обновлена');
+    });
+  }
+
+  function deleteMarker(id) {
+    if (!confirm('Удалить точку?')) return;
+    database.ref('markers/' + id).remove().then(() => {
+      showToast('Метка удалена');
+    });
+  }
+
+  // Поиск по карте
+  function searchMarkers() {
+    const query = document.getElementById('mapSearchInput').value.toLowerCase().trim();
+    if (!query) {
+      document.getElementById('mapSearchResults').innerHTML = '';
+      for (let id in allMarkers) {
+        if (allMarkers[id]) allMarkers[id].setOpacity(1);
+      }
+      return;
+    }
+    const results = [];
+    for (let id in allMarkers) {
+      const marker = allMarkers[id];
+      if (!marker) continue;
+      const popup = marker.getPopup();
+      const content = popup ? popup.getContent() : '';
+      const titleMatch = content.match(/<b>(.*?)<\/b>/);
+      const title = titleMatch ? titleMatch[1] : '';
+      if (title.toLowerCase().includes(query)) {
+        results.push(marker);
+        marker.setOpacity(1);
+      } else {
+        marker.setOpacity(0.3);
+      }
+    }
+    const resultDiv = document.getElementById('mapSearchResults');
+    if (results.length === 0) {
+      resultDiv.innerHTML = '<div class="empty-state">❌ Ничего не найдено</div>';
+    } else {
+      resultDiv.innerHTML = `<div style="background:var(--surface);padding:10px;border-radius:8px;">✅ Найдено меток: ${results.length}</div>`;
+    }
+  }
+
+  // Посты
+  function loadAllPosts() {
+    ['stories', 'flood', 'records'].forEach(section => {
+      database.ref('posts/' + section).on('value', snapshot => {
+        const posts = snapshot.val() || {};
+        const postsArray = Object.entries(posts).map(([id, p]) => ({ ...p, id, section }));
+        postsArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+        allPostsData[section] = postsArray;
+        renderPosts(section, postsArray);
+      });
+    });
+  }
+
+  function renderPosts(section, postsArray) {
+    const container = document.getElementById('posts-' + section);
+    if (!container) return;
+    if (postsArray.length === 0) {
+      container.innerHTML = '<div class="empty-state">📭 Пока нет публикаций</div>';
+      return;
+    }
+    container.innerHTML = postsArray.map(p => `
+      <div class="post-card" onclick="openPostDetail('${section}','${p.id}')">
+        <h3>${escapeHTML(p.title)}</h3>
+        <div class="post-meta">
+          <span>👤 ${escapeHTML(p.author)}</span>
+          <span>🕐 ${formatDate(p.date)}</span>
+          <span class="badge-xp" style="background:#3d2e0a;color:var(--accent);padding:3px 10px;border-radius:12px;">+${p.xpEarned} XP</span>
+          <span style="background:#1a2e1a;color:var(--green);padding:3px 10px;border-radius:12px;">💬 ${p.comments ? Object.keys(p.comments).length : 0}</span>
+        </div>
+        <div>${escapeHTML(p.content.substring(0, 150))}${p.content.length > 150 ? '...' : ''}</div>
+        ${canEdit(p.author) ? `
+        <div class="post-actions" onclick="event.stopPropagation()">
+          <button onclick="editPost('${section}','${p.id}')"><i class="fas fa-edit"></i> Редактировать</button>
+          <button onclick="deletePost('${section}','${p.id}')"><i class="fas fa-trash"></i> Удалить</button>
+        </div>
+        ` : ''}
+      </div>
+    `).join('');
+  }
+
+  function searchPosts(section) {
+    const query = document.getElementById(`${section}Search`).value.toLowerCase().trim();
+    if (!query) {
+      renderPosts(section, allPostsData[section]);
+      return;
+    }
+    const filtered = allPostsData[section].filter(p =>
+      p.title.toLowerCase().includes(query) || p.content.toLowerCase().includes(query)
+    );
+    renderPosts(section, filtered);
+  }
+
+  function editPost(section, postId) {
+    database.ref(`posts/${section}/${postId}`).once('value', snapshot => {
+      const post = snapshot.val();
+      if (!post) return showToast('Пост не найден', true);
+      
+      const modal = document.getElementById('modalOverlay');
+      document.getElementById('modalContent').innerHTML = `
+        <button class="btn-close-modal" onclick="closeModal()">✕</button>
+        <h3>✏️ Редактировать пост</h3>
+        <label>Заголовок</label>
+        <input id="editPostTitle" value="${escapeHTML(post.title)}">
+        <label>Содержание</label>
+        <textarea id="editPostContent" rows="6">${escapeHTML(post.content)}</textarea>
+        <div class="btn-row"><button class="btn-primary" onclick="savePostEdit('${section}','${postId}')">Сохранить</button><button class="btn-secondary" onclick="closeModal()">Отмена</button></div>
+      `;
+      modal.classList.add('show');
+    });
+  }
+
+  function savePostEdit(section, postId) {
+    const title = document.getElementById('editPostTitle').value.trim();
+    const content = document.getElementById('editPostContent').value.trim();
+    if (!title || !content) return showToast('Заполните поля', true);
+    database.ref(`posts/${section}/${postId}`).update({ title, content }).then(() => {
+      closeModal();
+      showToast('Пост обновлён');
+    });
+  }
+
+  function deletePost(section, postId) {
+    if (!confirm('Удалить пост?')) return;
+    database.ref(`posts/${section}/${postId}`).remove().then(() => {
+      showToast('Пост удалён');
+    });
+  }
+
+  function openPostModal(section) {
+    if (!currentUser) return showToast('Авторизуйтесь', true);
+    const modal = document.getElementById('modalOverlay');
+    document.getElementById('modalContent').innerHTML = `
+      <button class="btn-close-modal" onclick="closeModal()">✕</button>
+      <h3>Новая публикация</h3>
+      <label>Заголовок</label>
+      <input id="postTitle" maxlength="120">
+      <label>Содержание</label>
+      <textarea id="postContent" rows="5"></textarea>
+      <div class="btn-row"><button class="btn-primary" onclick="createPost('${section}')">Опубликовать</button><button class="btn-secondary" onclick="closeModal()">Отмена</button></div>
+    `;
+    modal.classList.add('show');
+  }
+
+  function createPost(section) {
+    const title = document.getElementById('postTitle')?.value.trim();
+    const content = document.getElementById('postContent')?.value.trim();
+    if (!title || !content) return showToast('Заполните поля', true);
+    const post = {
+      title: title,
+      content: content,
+      author: currentUser.nickname,
+      date: new Date().toISOString(),
+      xpEarned: XP_PER_POST
+    };
+    database.ref(`posts/${section}`).push().set(post).then(() => {
+      addXp(XP_PER_POST);
+      closeModal();
+      showToast('Пост опубликован');
+    });
+  }
+
+  function openPostDetail(section, postId) {
+    database.ref(`posts/${section}/${postId}`).once('value', snapshot => {
+      const post = snapshot.val();
+      if (!post) return;
+      const comments = post.comments ? Object.values(post.comments) : [];
+      const modal = document.getElementById('modalOverlay');
+      document.getElementById('modalContent').innerHTML = `
+        <button class="btn-close-modal" onclick="closeModal()">✕</button>
+        <h3>${escapeHTML(post.title)}</h3>
+        <div class="post-meta"><span>${escapeHTML(post.author)}</span><span>${formatDate(post.date)}</span></div>
+        <div style="white-space:pre-wrap;background:var(--surface2);padding:12px;border-radius:8px;margin:12px 0;">${escapeHTML(post.content)}</div>
+        <h4>Комментарии (${comments.length})</h4>
+        <div id="commentsList">${comments.map(c => `
+          <div class="comment-item">
+            <div><b>${escapeHTML(c.author)}</b> <small>${formatDate(c.date)}</small></div>
+            <div>${escapeHTML(c.content)}</div>
+          </div>
+        `).join('')}</div>
+        <textarea id="commentInput" placeholder="Ваш комментарий..." rows="3"></textarea>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="addComment('${section}','${postId}')">Отправить</button>
+          <button class="btn-secondary" onclick="closeModal()">Закрыть</button>
+        </div>
+      `;
+      modal.classList.add('show');
+    });
+  }
+
+  function addComment(section, postId) {
+    const text = document.getElementById('commentInput')?.value.trim();
+    if (!text) return showToast('Введите текст', true);
+    const comment = {
+      author: currentUser.nickname,
+      content: text,
+      date: new Date().toISOString()
+    };
+    database.ref(`posts/${section}/${postId}/comments`).push().set(comment).then(() => {
+      addXp(XP_PER_COMMENT);
+      closeModal();
+      openPostDetail(section, postId);
+      showToast('Комментарий добавлен');
+    });
+  }
+
+  // Карта с переключением слоёв
+  let satelliteLayer = null;
+  let streetLayer = null;
+  
+  function initMap() {
+    // Спутниковый слой (Esri World Imagery)
+    satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri',
+      maxZoom: 19
+    });
+    
+    // Обычный слой (OpenStreetMap)
+    streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    });
+    
+    mapInstance = L.map('map').setView([51.2294, 58.4753], 13);
+    
+    // По умолчанию спутник
+    satelliteLayer.addTo(mapInstance);
+    currentLayer = 'satellite';
+    document.getElementById('layerToggleBtn').innerHTML = '🗺️ Обычная';
+    
+    mapInstance.on('click', e => {
+      if (isAddingMarker) {
+        pendingMarkerCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+        openMarkerModal();
+        isAddingMarker = false;
+        updateAddMarkerButton(false);
+      }
+    });
+    setTimeout(() => mapInstance.invalidateSize(), 300);
+  }
+  
+  function toggleMapLayer() {
+    if (currentLayer === 'satellite') {
+      mapInstance.removeLayer(satelliteLayer);
+      streetLayer.addTo(mapInstance);
+      currentLayer = 'street';
+      document.getElementById('layerToggleBtn').innerHTML = '🛰️ Спутник';
+      showToast('Переключено на обычную карту');
+    } else {
+      mapInstance.removeLayer(streetLayer);
+      satelliteLayer.addTo(mapInstance);
+      currentLayer = 'satellite';
+      document.getElementById('layerToggleBtn').innerHTML = '🗺️ Обычная';
+      showToast('Переключено на спутник');
+    }
+  }
+
+  function openMarkerModal() {
+    const modal = document.getElementById('modalOverlay');
+    document.getElementById('modalContent').innerHTML = `
+      <button class="btn-close-modal" onclick="closeModal()">✕</button>
+      <h3>📍 Новая точка</h3>
+      <label>Название *</label>
+      <input id="markerTitle" maxlength="80" placeholder="Название объекта">
+      <label>Описание (необязательно)</label>
+      <textarea id="markerDesc" placeholder="Опишите место..."></textarea>
+      <label>Фото URL (необязательно)</label>
+      <input id="markerImageUrl" placeholder="https://...">
+      <label>Видео URL (необязательно)</label>
+      <input id="markerVideoUrl" placeholder="https://youtube.com/...">
+      <div class="slider-group"><label>📦 Хабарность (0-10): <span id="habarnostVal">0</span></label>
+      <input type="range" id="habarnost" min="0" max="10" value="0" oninput="habarnostVal.innerText=this.value"></div>
+      <div class="slider-group"><label>🏗️ Состояние (0-10): <span id="stateVal">0</span></label>
+      <input type="range" id="state" min="0" max="10" value="0" oninput="stateVal.innerText=this.value"></div>
+      <div class="slider-group"><label>🚨 Охрана (0-10): <span id="securityVal">0</span></label>
+      <input type="range" id="security" min="0" max="10" value="0" oninput="securityVal.innerText=this.value"></div>
+      <div class="btn-row"><button class="btn-primary" onclick="saveMarker()">Сохранить</button><button class="btn-secondary" onclick="closeModal()">Отмена</button></div>
+    `;
+    modal.classList.add('show');
+  }
+
+  function saveMarker() {
+    const title = document.getElementById('markerTitle')?.value.trim();
+    if (!title) return showToast('Введите название', true);
+    
+    const marker = {
+      lat: pendingMarkerCoords.lat,
+      lng: pendingMarkerCoords.lng,
+      title: title,
+      description: document.getElementById('markerDesc')?.value.trim() || '',
+      imageUrl: document.getElementById('markerImageUrl')?.value.trim() || '',
+      videoUrl: document.getElementById('markerVideoUrl')?.value.trim() || '',
+      habarnost: parseInt(document.getElementById('habarnost')?.value) || 0,
+      state: parseInt(document.getElementById('state')?.value) || 0,
+      security: parseInt(document.getElementById('security')?.value) || 0,
+      author: currentUser.nickname,
+      date: new Date().toISOString(),
+      xpEarned: XP_PER_MARKER
+    };
+    database.ref('markers').push().set(marker).then(() => {
+      addXp(XP_PER_MARKER);
+      closeModal();
+      showToast('Метка добавлена');
+      pendingMarkerCoords = null;
+    });
+  }
+
+  function startAddMarker() {
+    if (!mapInstance) return;
+    if (!currentUser) return showToast('Авторизуйтесь', true);
+    isAddingMarker = !isAddingMarker;
+    updateAddMarkerButton(isAddingMarker);
+  }
+
+  function updateAddMarkerButton(active) {
+    const btn = document.querySelector('.btn-add-marker');
+    const instr = document.getElementById('mapInstruction');
+    if (active) {
+      btn.style.background = '#c0392b';
+      btn.textContent = '🎯 Кликните на карту...';
+      instr.textContent = '🎯 Кликните в нужное место';
+    } else {
+      btn.style.background = 'var(--accent)';
+      btn.textContent = '📍 Добавить точку';
+      instr.textContent = '👆 Кликните по карте, чтобы добавить точку';
+    }
+  }
+
+  function toggleAllPopups() {
+    if (!mapInstance) return;
+    const pts = Object.values(allMarkers).map(m => m.getLatLng());
+    if (pts.length) {
+      mapInstance.fitBounds(L.latLngBounds(pts), { padding: [40, 40] });
+    }
+  }
+
+  // Навигация
+  function switchSection(name) {
+    currentSection = name;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    const sec = document.getElementById('section-' + name);
+    if (sec) sec.classList.add('active');
+    const btn = document.querySelector(`nav button[data-section="${name}"]`);
+    if (btn) btn.classList.add('active');
+    if (name === 'map' && mapInstance) {
+      setTimeout(() => mapInstance.invalidateSize(), 200);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    if (isAddingMarker) {
+      isAddingMarker = false;
+      updateAddMarkerButton(false);
+      pendingMarkerCoords = null;
+    }
+  }
+
+  // Админ панель
+  function openAdminPanel() {
+    if (!isAdmin()) return;
+    const modal = document.getElementById('modalOverlay');
+    document.getElementById('modalContent').innerHTML = `
+      <button class="btn-close-modal" onclick="closeModal()">✕</button>
+      <h3>⚙️ Админ-панель</h3>
+      <button class="btn-danger" onclick="adminClearAll()">⚠️ Сбросить ВСЕ данные</button>
+      <hr>
+      <h4>Управление пользователями</h4>
+      <div id="adminUsersList">Загрузка...</div>
+    `;
+    modal.classList.add('show');
+    loadAdminUsers();
+  }
+
+  function loadAdminUsers() {
+    database.ref('users').once('value', snapshot => {
+      const users = snapshot.val() || {};
+      let html = '';
+      Object.entries(users).forEach(([id, user]) => {
+        html += `<div style="margin:5px 0;padding:10px;background:var(--surface2);border-radius:5px;">
+          <b>${escapeHTML(user.nickname)}</b> | XP: ${user.xp || 0}
+          <button onclick="adminDeleteUser('${id}')" class="btn-danger" style="margin-left:10px;padding:5px 10px;">❌ Удалить</button>
+        </div>`;
+      });
+      document.getElementById('adminUsersList').innerHTML = html || 'Нет пользователей';
+    });
+  }
+
+  function adminDeleteUser(userId) {
+    if (confirm('Удалить пользователя?')) {
+      database.ref(`users/${userId}`).remove().then(() => {
+        showToast('Пользователь удалён');
+        openAdminPanel();
+      });
+    }
+  }
+
+  function adminClearAll() {
+    if (confirm('⚠️ ВНИМАНИЕ! Это удалит ВСЕ данные! Продолжить?')) {
+      database.ref('/').remove().then(() => {
+        showToast('Все данные удалены');
+        setTimeout(() => location.reload(), 2000);
+      });
+    }
+  }
+
+  // Глобальные функции
+  window.switchSection = switchSection;
+  window.startAddMarker = startAddMarker;
+  window.toggleAllPopups = toggleAllPopups;
+  window.saveNickname = saveNickname;
+  window.setTheme = setTheme;
+  window.openPostModal = openPostModal;
+  window.createPost = createPost;
+  window.openPostDetail = openPostDetail;
+  window.addComment = addComment;
+  window.editPost = editPost;
+  window.deletePost = deletePost;
+  window.editMarker = editMarker;
+  window.deleteMarker = deleteMarker;
+  window.saveMarker = saveMarker;
+  window.saveMarkerEdit = saveMarkerEdit;
+  window.closeModal = closeModal;
+  window.searchMarkers = searchMarkers;
+  window.searchPosts = searchPosts;
+  window.openAdminPanel = openAdminPanel;
+  window.adminDeleteUser = adminDeleteUser;
+  window.adminClearAll = adminClearAll;
+  window.toggleMapLayer = toggleMapLayer;
+
+  // Запуск
+  window.onload = () => {
+    const savedNick = localStorage.getItem('orsk_nickname');
+    if (savedNick) {
+      login(savedNick);
+    } else {
+      const modal = document.getElementById('modalOverlay');
+      document.getElementById('modalContent').innerHTML = `
+        <h3>🔦 Добро пожаловать</h3>
+        <label>Введите ваш никнейм:</label>
+        <input id="loginNickname" maxlength="30" placeholder="Ваш позывной" />
+        <div class="btn-row"><button class="btn-primary" onclick="performLogin()">Войти</button></div>
+      `;
+      modal.classList.add('show');
+    }
+    initMap();
+    document.querySelectorAll('nav button').forEach(b => {
+      b.addEventListener('click', () => switchSection(b.dataset.section));
+    });
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+    document.getElementById('adminBtnNav').addEventListener('click', openAdminPanel);
+    switchSection('map');
+  };
+
+  window.performLogin = function() {
+    const nick = document.getElementById('loginNickname')?.value.trim();
+    if (!nick || nick.length < 2) return showToast('Введите корректный ник', true);
+    closeModal();
+    login(nick);
+  };
+</script>
+
+</body>
+</html>
